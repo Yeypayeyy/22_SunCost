@@ -5,5 +5,6 @@ radiasi matahari lokasi pengguna.
 
 NAMA KELOMPOK ANDA
 Ketua Kelompok: 
-Anggota 1: MUHAMMAD FARREL AL GHAZY – 24/540589/TK/60022
-Anggota 2:
+Anggota 1: 
+Anggota 2: MUHAMMAD FARREL AL GHAZY – 24/540589/TK/60022
+Anggota 3: 
