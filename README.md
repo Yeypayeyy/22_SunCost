@@ -6,4 +6,4 @@ radiasi matahari lokasi pengguna.
 NAMA KELOMPOK ANDA
 Ketua Kelompok: 
 Anggota 1: 
-Anggota 2:
+Anggota 2: MAYRAVIVANIA SYAHDA CHARISA - 24/538308/TK/59701
