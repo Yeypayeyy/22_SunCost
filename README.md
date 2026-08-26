@@ -3,8 +3,8 @@ Aplikasi desktop untuk menghitung potensi energi, penghematan biaya,
 dan waktu balik modal pemasangan panel surya atap berdasarkan data
 radiasi matahari lokasi pengguna.
 
-NAMA KELOMPOK ANDA
-Ketua Kelompok: 
-Anggota 1: 
-Anggota 2: MUHAMMAD FARREL AL GHAZY – 24/540589/TK/60022
-Anggota 3: 
+Kelompok SunCost
+1. Ketua Kelompok:
+2. Anggota 1: MAYRAVIVANIA SYAHDA CHARISA - 24/538308/TK/59701
+3. Anggota 2: MUHAMMAD FARREL AL GHAZY - 24/540589/TK/60022
+4. Anggota 3: 
