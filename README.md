@@ -5,5 +5,6 @@ radiasi matahari lokasi pengguna.
 
 Kelompok SunCost
 1. Ketua Kelompok:
-2. Anggota 1:
-3. Anggota 2: MAYRAVIVANIA SYAHDA CHARISA - 24/538308/TK/59701
+2. Anggota 1: MAYRAVIVANIA SYAHDA CHARISA - 24/538308/TK/59701
+3. Anggota 2: MUHAMMAD FARREL AL GHAZY - 24/540589/TK/60022
+4. Anggota 3: 
