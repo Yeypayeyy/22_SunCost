@@ -1,0 +1,26 @@
+﻿<Page x:Class="SunCost.Views.HasilAnalisisPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Title="Hasil Analisis">
+    <ScrollViewer>
+        <StackPanel Margin="30">
+            <TextBlock Text="Hasil Analisis Simulasi" FontSize="24" FontWeight="Bold" Margin="0,0,0,20"/>
+
+            <TextBlock Text="Potensi Energi" FontSize="18" FontWeight="Bold" Margin="0,10,0,5"/>
+            <TextBlock Text="Kapasitas Terpasang: 4.5 kWp"/>
+            <TextBlock Text="Produksi Energi Tahunan: 6,200 kWh"/>
+            <TextBlock Text="Produksi Energi Bulanan (rata-rata): 517 kWh"/>
+
+            <TextBlock Text="Analisis Finansial (ROI)" FontSize="18" FontWeight="Bold" Margin="0,20,0,5"/>
+            <TextBlock Text="Estimasi Biaya Instalasi: Rp 45.000.000"/>
+            <TextBlock Text="Penghematan per Bulan: Rp 850.000"/>
+            <TextBlock Text="Periode Balik Modal: 4.4 tahun"/>
+            <TextBlock Text="Proyeksi Keuntungan Bersih (25 tahun): Rp 210.000.000"/>
+
+            <TextBlock Text="Dampak Lingkungan" FontSize="18" FontWeight="Bold" Margin="0,20,0,5"/>
+            <TextBlock Text="Emisi CO2 yang Dihindari: 4.8 ton/tahun"/>
+
+            <Button Content="Simpan ke Riwayat" Click="BtnSimpan_Click" Margin="0,20,0,0" Padding="10" Background="#2E7D32" Foreground="White"/>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

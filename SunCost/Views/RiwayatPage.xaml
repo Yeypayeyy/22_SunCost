@@ -1,0 +1,26 @@
+﻿<Page x:Class="SunCost.Views.RiwayatPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Title="Riwayat Simulasi">
+    <Grid Margin="30">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="Riwayat Simulasi" FontSize="24" FontWeight="Bold" Grid.Row="0" Margin="0,0,0,20"/>
+
+        <DataGrid x:Name="GridRiwayat" Grid.Row="1" AutoGenerateColumns="False" IsReadOnly="True">
+            <DataGrid.Columns>
+                <DataGridCheckBoxColumn Header="Pilih" Binding="{Binding IsDipilih}" Width="50" IsReadOnly="False"/>
+                <DataGridTextColumn Header="Nama Skenario" Binding="{Binding NamaSkenario}" Width="*"/>
+                <DataGridTextColumn Header="Tanggal" Binding="{Binding Tanggal}" Width="120"/>
+                <DataGridTextColumn Header="Kapasitas (kWp)" Binding="{Binding Kapasitas}" Width="130"/>
+                <DataGridTextColumn Header="ROI (tahun)" Binding="{Binding Roi}" Width="100"/>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <Button Content="Bandingkan Skenario Terpilih" Click="BtnBandingkan_Click" Grid.Row="2" Margin="0,20,0,0" Padding="10" Background="#2E7D32" Foreground="White" HorizontalAlignment="Left"/>
+    </Grid>
+</Page>
