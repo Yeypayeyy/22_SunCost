@@ -20,7 +20,7 @@ Kelompok SunCost
 
 | Nama | NIM | Tanggung Jawab |
 |---|---|---|
-| Muhammad Farrel Al Ghazy | 24/540589/TK/60022 | Software Architect |
+| Muhammad Farrel Al Ghazy | 24/540589/TK/60022 | Software Architect & UI/UX |
 | Mayravivania Syahda Charisa | 24/538308/TK/59701 | Frontend Developer |
 | Sri Wahyuni Arista | 23/521971/TK/57593 | Backend Developer |
 
