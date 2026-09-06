@@ -1,0 +1,81 @@
+<Application x:Class="SunCost.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             StartupUri="MainWindow.xaml">
+  <Application.Resources>
+
+    <!-- Token warna, sama persis dengan mockup Figma -->
+    <SolidColorBrush x:Key="CanvasBrush"     Color="#F5F3EF"/>
+    <SolidColorBrush x:Key="SurfaceBrush"    Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="InkBrush"        Color="#1C1B19"/>
+    <SolidColorBrush x:Key="MutedBrush"      Color="#6B665E"/>
+    <SolidColorBrush x:Key="BorderBrush"     Color="#E3DFD8"/>
+    <SolidColorBrush x:Key="AccentBrush"     Color="#C1652F"/>
+    <SolidColorBrush x:Key="AccentHoverBrush" Color="#A95524"/>
+    <SolidColorBrush x:Key="AccentSoftBrush" Color="#F9EFE7"/>
+    <SolidColorBrush x:Key="GreenBrush"      Color="#2F6B4F"/>
+
+    <!-- Kartu putih bersudut membulat -->
+    <Style x:Key="Card" TargetType="Border">
+      <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
+      <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="CornerRadius" Value="12"/>
+    </Style>
+
+    <!-- Tombol utama -->
+    <Style x:Key="PrimaryButton" TargetType="Button">
+      <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
+      <Setter Property="Foreground" Value="White"/>
+      <Setter Property="FontSize" Value="15"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="Padding" Value="28,14"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="bd" Background="{TemplateBinding Background}"
+                    CornerRadius="10" Padding="{TemplateBinding Padding}">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="bd" Property="Background" Value="{StaticResource AccentHoverBrush}"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <!-- Item navigasi sidebar -->
+    <Style x:Key="NavItem" TargetType="ListBoxItem">
+      <Setter Property="Padding" Value="12,10"/>
+      <Setter Property="Margin" Value="0,0,0,4"/>
+      <Setter Property="FontSize" Value="14"/>
+      <Setter Property="Foreground" Value="{StaticResource MutedBrush}"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="ListBoxItem">
+            <Border x:Name="bd" CornerRadius="8" Background="Transparent"
+                    Padding="{TemplateBinding Padding}">
+              <ContentPresenter/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="bd" Property="Background" Value="#F2EFE9"/>
+              </Trigger>
+              <Trigger Property="IsSelected" Value="True">
+                <Setter TargetName="bd" Property="Background" Value="{StaticResource AccentSoftBrush}"/>
+                <Setter TargetName="bd" Property="TextElement.Foreground" Value="{StaticResource AccentBrush}"/>
+                <Setter TargetName="bd" Property="TextElement.FontWeight" Value="SemiBold"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+  </Application.Resources>
+</Application>
