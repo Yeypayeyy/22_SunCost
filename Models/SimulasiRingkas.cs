@@ -5,14 +5,7 @@ namespace SunCost.Models;
 /// <summary>Ringkasan satu simulasi untuk ditampilkan sebagai kartu di beranda.</summary>
 public class SimulasiRingkas
 {
-    // Format angka Indonesia didefinisikan eksplisit, bukan lewat CultureInfo("id-ID"),
-    // supaya hasilnya sama di mesin mana pun (termasuk mode globalization-invariant).
-    private static readonly NumberFormatInfo Id = new()
-    {
-        NumberGroupSeparator = ".",
-        NumberDecimalSeparator = ",",
-        NumberGroupSizes = new[] { 3 }
-    };
+    private static readonly NumberFormatInfo Id = FormatId.Angka;
 
     public string Lokasi { get; init; } = "";
     public double KapasitasKwp { get; init; }
@@ -22,4 +15,12 @@ public class SimulasiRingkas
     public string KapasitasTeks => KapasitasKwp.ToString("0.0", Id) + " kWp";
     public string PaybackTeks => PaybackTahun.ToString("0.0", Id) + " tahun";
     public string HematTeks => "Rp " + HematPerBulan.ToString("#,##0", Id);
+
+    public static SimulasiRingkas Dari(Simulasi s) => new()
+    {
+        Lokasi = s.Lokasi.Nama,
+        KapasitasKwp = s.Hasil?.KapasitasKwp ?? 0,
+        PaybackTahun = s.Hasil?.PaybackTahun ?? 0,
+        HematPerBulan = s.Hasil?.HematPerBulan ?? 0
+    };
 }
