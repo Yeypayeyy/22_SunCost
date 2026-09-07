@@ -8,7 +8,9 @@ Kelompok SunCost
 2. Anggota 1: MAYRAVIVANIA SYAHDA CHARISA - 24/538308/TK/59701
 3. Anggota 2: MUHAMMAD FARREL AL GHAZY - 24/540589/TK/60022
 4. Anggota 3: SRI WAHYUNI ARISTA - 23/521971/TK/57593
- 
+
+## Class Diagram
+<img width="1492" height="1210" alt="classdiagramsuncost drawio" src="https://github.com/user-attachments/assets/fc16da93-a955-4a9a-9121-40422acccbf2" />
 
 
 ## Detail Aplikasi
