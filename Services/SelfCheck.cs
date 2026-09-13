@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using SunCost.Models;
 
 namespace SunCost.Services;
@@ -14,61 +15,78 @@ public static class SelfCheck
     [Conditional("DEBUG")]
     public static void Jalankan()
     {
-        var lokasi = new Lokasi { Nama = "Sleman", Latitude = -7.72, Longitude = 110.36 };
-        var s = new Simulasi
-        {
-            Lokasi = lokasi,
-            Atap = new Atap { LuasM2 = 40, Orientasi = Arah.Utara, KemiringanDerajat = 15 },
-            Iklim = new DataIklim { PeakSunHours = 4.5, SuhuRataRataC = 27 }
-        };
-        var kalkulator = new KalkulatorPlts();
-        var h = s.Hitung(kalkulator);
+        var lokasi = new Lokasi("Sleman", -7.72, 110.36, luasAtap: 40, orientasi: 0, kemiringan: 15);
+        var panel = new PanelSurya("Contoh 550", 550, 21.3, koefisienSuhu: 0.4, luasPerPanel: 2.6, hargaPerUnit: 2_750_000);
+        var radiasi = new DataRadiasi(Enumerable.Repeat(4.5, 12).ToList(), 27, "uji", DateTime.Now);
+        var tarif = new TarifListrikPLN("R-1/TR 1.300 VA", 1444.70, new DateTime(2025, 1, 1));
+
+        Debug.Assert(lokasi.validasi(), "lokasi contoh mestinya valid");
+        Debug.Assert(!new Lokasi("X", 100, 0, 40, 0, 15).validasi(), "latitude 100 mestinya ditolak");
+        Debug.Assert(lokasi.getKoordinat() == "-7.72,110.36", $"format koordinat berubah: {lokasi.getKoordinat()}");
 
         // 40 m2 x 0,75 = 30 m2 efektif, panel 2,6 m2 -> 11 panel x 550 Wp = 6,05 kWp.
-        Debug.Assert(h.JumlahPanel == 11, "jumlah panel meleset");
-        Debug.Assert(Math.Abs(h.KapasitasKwp - 6.05) < 1e-9, "kapasitas meleset");
+        var kalkulator = new KalkulatorEnergi(lokasi, panel, radiasi);
+        Debug.Assert(panel.hitungJumlahPanel(lokasi.hitungLuasEfektif()) == 11, "jumlah panel meleset");
+        Debug.Assert(Math.Abs(kalkulator.hitungKapasitasTerpasang(lokasi, panel) - 6.05) < 1e-9, "kapasitas meleset");
 
-        // Koreksi suhu harus memangkas PR: sel 52 C -> rugi 10,8% dari PR dasar 0,80.
-        double pr = kalkulator.PerformanceRatioTerkoreksi(s);
-        Debug.Assert(pr > 0.70 && pr < 0.72, $"PR terkoreksi di luar dugaan: {pr}");
-
-        // Atap menghadap utara di belahan selatan adalah orientasi optimal.
-        Debug.Assert(s.Atap.FaktorOrientasi(lokasi) > 0.97, "faktor orientasi optimal terlalu rendah");
-        var terbalik = new Atap { LuasM2 = 40, Orientasi = Arah.Selatan, KemiringanDerajat = 30 };
-        Debug.Assert(terbalik.FaktorOrientasi(lokasi) < s.Atap.FaktorOrientasi(lokasi),
-            "atap membelakangi matahari mestinya lebih rugi");
+        // Udara 27 C -> sel 52 C -> rugi (52 - 25) x 0,4% = 10,8%.
+        Debug.Assert(Math.Abs(kalkulator.hitungKoreksiSuhu(27, panel) - 0.892) < 1e-9, "koreksi suhu meleset");
 
         // Produksi wajar untuk PLTS di Indonesia: 1.100-1.600 kWh per kWp per tahun.
-        double perKwp = h.EnergiTahunanKwh / h.KapasitasKwp;
+        double produksi = kalkulator.hitungProduksiTahunan();
+        double perKwp = produksi / 6.05;
         Debug.Assert(perKwp > 1100 && perKwp < 1600, $"produksi per kWp tidak wajar: {perKwp}");
+        Debug.Assert(Math.Abs(Enumerable.Range(1, 12).Sum(kalkulator.hitungProduksiBulanan) - produksi) < 1e-6,
+            "produksi tahunan harus sama dengan jumlah bulanan");
+        Debug.Assert(radiasi.getRataRataTahunan() == 4.5, "rata-rata tahunan meleset");
 
-        // Tarif naik lebih cepat daripada panel terdegradasi, jadi payback lebih cepat
-        // daripada pembagian sederhana biaya / hemat tahun pertama.
-        double paybackSederhana = (double)(h.BiayaInstalasi / h.HematPerTahun);
-        Debug.Assert(h.PaybackTahun > 0 && h.PaybackTahun < paybackSederhana,
-            $"payback {h.PaybackTahun} mestinya di bawah {paybackSederhana}");
+        Debug.Assert(tarif.hitungBiaya(100) == 144_470, "biaya listrik meleset");
 
-        Debug.Assert(h.KeuntunganBersih25Tahun > 0, "proyeksi 25 tahun mestinya untung");
-        Debug.Assert(Math.Abs(h.Co2DihindariKgPerTahun - h.EnergiTahunanKwh * 0.794) < 1e-6, "CO2 meleset");
+        // Degradasi mengurangi penghematan tiap tahun, jadi payback lebih lama daripada pembagian sederhana.
+        var analisis = new AnalisisFinansial(biayaPerWp: 15_000);
+        double biaya = analisis.hitungBiayaInstalasi(6050);
+        double hematBulanan = analisis.hitungPenghematanBulanan(produksi / 12, tarif);
+        double paybackSederhana = biaya / (hematBulanan * 12);
+        double payback = analisis.hitungPaybackPeriod();
+        Debug.Assert(payback > paybackSederhana && payback < 25, $"payback {payback} tidak wajar (sederhana {paybackSederhana})");
+        Debug.Assert(analisis.proyeksiKeuntungan25Tahun() > 0, "proyeksi 25 tahun mestinya untung");
 
-        CekPenyimpanan(s);
+        var dampak = new DampakLingkungan();
+        Debug.Assert(Math.Abs(dampak.hitungEmisiDihindari(produksi) - produksi * 0.794) < 1e-9, "CO2 meleset");
+        Debug.Assert(dampak.setaraPohon(22) == 1 && dampak.setaraPohon(23) == 2, "pembulatan pohon meleset");
+
+        var skenario = new SimulasiSkenario("Rumah Sleman", lokasi, panel, radiasi, new AnalisisFinansial(15_000), tarif);
+        skenario.jalankanSimulasi();
+        Debug.Assert(Math.Abs(skenario.PaybackPeriod - payback) < 1e-9, "payback skenario beda dengan analisis langsung");
+        Debug.Assert(skenario.getRingkasan().StartsWith("Rumah Sleman:"), "ringkasan tidak memuat nama");
+
+        CekPenyimpanan(skenario);
     }
 
-    private static void CekPenyimpanan(Simulasi s)
+    private static void CekPenyimpanan(SimulasiSkenario s)
     {
         string berkas = Path.Combine(Path.GetTempPath(), $"suncost-selfcheck-{Guid.NewGuid():N}.db");
         try
         {
-            var repo = new RiwayatRepositorySqlite(berkas);
-            int id = repo.Simpan(s);
+            var riwayat = new RiwayatSimulasi(new RepositoriSimulasi(berkas));
+            riwayat.tambahSkenario(s);
 
-            var tersimpan = repo.AmbilSemua();
-            Debug.Assert(tersimpan.Count == 1, "riwayat mestinya berisi satu baris");
-            Debug.Assert(tersimpan[0].Hasil!.HematPerBulan == s.Hasil!.HematPerBulan, "nilai rupiah berubah saat dibaca ulang");
-            Debug.Assert(tersimpan[0].Atap.Orientasi == s.Atap.Orientasi, "orientasi berubah saat dibaca ulang");
+            // Skenario yang tidak pernah balik modal menyimpan payback tak hingga.
+            var rugi = new SimulasiSkenario("rugi", "Tidak balik modal", DateTime.Now.AddDays(-1), 1, 1,
+                double.PositiveInfinity, 1);
+            riwayat.tambahSkenario(rugi);
 
-            repo.Hapus(id);
-            Debug.Assert(repo.AmbilSemua().Count == 0, "hapus tidak berpengaruh");
+            var dimuat = riwayat.muatRiwayat();
+            Debug.Assert(dimuat.Count == 2, "riwayat mestinya berisi dua skenario");
+            Debug.Assert(dimuat[0].Id == s.Id && dimuat[0].PenghematanTahunan == s.PenghematanTahunan,
+                "skenario berubah saat dibaca ulang");
+            Debug.Assert(double.IsPositiveInfinity(dimuat[1].PaybackPeriod), "payback tak hingga hilang di database");
+            Debug.Assert(riwayat.bandingkanSkenario(dimuat[1], dimuat[0]).StartsWith("Rumah Sleman balik modal lebih cepat"),
+                "perbandingan salah memilih skenario");
+
+            var repo = new RepositoriSimulasi(berkas);
+            Debug.Assert(repo.ambilById(s.Id)?.Nama == "Rumah Sleman", "ambilById tidak menemukan skenario");
+            Debug.Assert(riwayat.hapusSkenario(s.Id) && repo.ambilById(s.Id) is null, "hapus tidak berpengaruh");
         }
         finally
         {
