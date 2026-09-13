@@ -37,7 +37,7 @@
         <DataTemplate>
           <Border Style="{StaticResource Card}" Padding="20" Margin="0,0,16,0">
             <StackPanel>
-              <TextBlock Text="{Binding Lokasi}" FontSize="15" FontWeight="SemiBold"
+              <TextBlock Text="{Binding Nama}" FontSize="15" FontWeight="SemiBold"
                          Foreground="{StaticResource InkBrush}"
                          TextTrimming="CharacterEllipsis"/>
 
@@ -48,8 +48,8 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Grid.Column="0" Margin="0,0,24,0">
-                  <TextBlock Text="Kapasitas" FontSize="11" Foreground="{StaticResource MutedBrush}"/>
-                  <TextBlock Text="{Binding KapasitasTeks}" FontSize="17" FontWeight="SemiBold"
+                  <TextBlock Text="Produksi per tahun" FontSize="11" Foreground="{StaticResource MutedBrush}"/>
+                  <TextBlock Text="{Binding ProduksiTeks}" FontSize="17" FontWeight="SemiBold"
                              Foreground="{StaticResource InkBrush}"/>
                 </StackPanel>
 
@@ -61,7 +61,7 @@
               </Grid>
 
               <StackPanel Margin="0,14,0,0">
-                <TextBlock Text="Hemat per bulan" FontSize="11" Foreground="{StaticResource MutedBrush}"/>
+                <TextBlock Text="Hemat per tahun" FontSize="11" Foreground="{StaticResource MutedBrush}"/>
                 <TextBlock Text="{Binding HematTeks}" FontSize="17" FontWeight="SemiBold"
                            Foreground="{StaticResource GreenBrush}"/>
               </StackPanel>
