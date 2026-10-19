@@ -24,7 +24,7 @@
 
         <ListBox x:Name="Nav" BorderThickness="0" Background="Transparent"
                  ItemContainerStyle="{StaticResource NavItem}"
-                 SelectedIndex="0">
+                 SelectedIndex="0" SelectionChanged="Nav_SelectionChanged">
           <ListBoxItem Content="Beranda"/>
           <ListBoxItem Content="Simulasi Baru"/>
           <ListBoxItem Content="Riwayat"/>
@@ -34,7 +34,7 @@
     </Border>
 
     <!-- Area konten -->
-    <ContentControl Grid.Column="1">
+    <ContentControl x:Name="Konten" Grid.Column="1">
       <views:BerandaPage/>
     </ContentControl>
   </Grid>

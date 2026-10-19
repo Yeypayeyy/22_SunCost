@@ -32,6 +32,6 @@ public partial class BerandaPage : UserControl
 
     private void MulaiSimulasi_Click(object sender, RoutedEventArgs e)
     {
-        MessageBox.Show("Halaman Simulasi Baru belum dibuat.", "SunCost");
+        ((MainWindow)Window.GetWindow(this)).Buka(1);
     }
 }
