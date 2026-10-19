@@ -14,6 +14,35 @@
     <SolidColorBrush x:Key="AccentHoverBrush" Color="#A95524"/>
     <SolidColorBrush x:Key="AccentSoftBrush" Color="#F9EFE7"/>
     <SolidColorBrush x:Key="GreenBrush"      Color="#2F6B4F"/>
+    <SolidColorBrush x:Key="TrackBrush"      Color="#ECE9E4"/>
+    <SolidColorBrush x:Key="SubtleBrush"     Color="#F6F4F1"/>
+    <SolidColorBrush x:Key="BarBrush"        Color="#D89867"/>
+
+    <!-- Tab bersegmen (Energi / Finansial & Lingkungan) -->
+    <Style x:Key="SegmentTab" TargetType="RadioButton">
+      <Setter Property="FontSize" Value="13"/>
+      <Setter Property="Foreground" Value="{StaticResource MutedBrush}"/>
+      <Setter Property="Padding" Value="18,8"/>
+      <Setter Property="Margin" Value="0,0,4,0"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="RadioButton">
+            <Border x:Name="bd" CornerRadius="7" Background="Transparent"
+                    Padding="{TemplateBinding Padding}">
+              <ContentPresenter/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="bd" Property="Background" Value="{StaticResource SurfaceBrush}"/>
+                <Setter Property="Foreground" Value="{StaticResource InkBrush}"/>
+                <Setter Property="FontWeight" Value="SemiBold"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
 
     <!-- Kartu putih bersudut membulat -->
     <Style x:Key="Card" TargetType="Border">
