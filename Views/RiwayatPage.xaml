@@ -1,0 +1,182 @@
+<UserControl x:Class="SunCost.Views.RiwayatPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             FontFamily="Segoe UI">
+  <UserControl.Resources>
+    <Style TargetType="CheckBox">
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="CheckBox">
+            <Border x:Name="Kotak" Width="16" Height="16" CornerRadius="4"
+                    BorderThickness="1" BorderBrush="{StaticResource BorderBrush}"
+                    Background="{StaticResource SurfaceBrush}"/>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="Kotak" Property="Background" Value="{StaticResource AccentBrush}"/>
+                <Setter TargetName="Kotak" Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+              </Trigger>
+              <Trigger Property="IsKeyboardFocused" Value="True">
+                <Setter TargetName="Kotak" Property="BorderBrush" Value="{StaticResource InkBrush}"/>
+                <Setter TargetName="Kotak" Property="BorderThickness" Value="2"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <Style x:Key="LabelMetrik" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="11"/>
+      <Setter Property="Foreground" Value="{StaticResource MutedBrush}"/>
+    </Style>
+    <Style x:Key="NilaiMetrik" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="15"/>
+      <Setter Property="FontWeight" Value="SemiBold"/>
+      <Setter Property="Foreground" Value="{StaticResource InkBrush}"/>
+      <Setter Property="Margin" Value="0,3,0,0"/>
+    </Style>
+  </UserControl.Resources>
+  <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+    <StackPanel Margin="40,36">
+      <DockPanel>
+        <Button x:Name="Bandingkan" DockPanel.Dock="Right" Content="Bandingkan (0)"
+                FontSize="13" Padding="20,11"
+                VerticalAlignment="Center" IsEnabled="False" Click="Bandingkan_Click">
+          <Button.Style>
+            <Style TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
+              <Style.Triggers>
+                <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.45"/></Trigger>
+              </Style.Triggers>
+            </Style>
+          </Button.Style>
+        </Button>
+        <StackPanel>
+          <TextBlock Text="Riwayat Simulasi" FontSize="26" FontWeight="SemiBold"
+                     Foreground="{StaticResource InkBrush}"/>
+          <TextBlock Text="Tersimpan lokal di perangkat ini. Pilih 2–3 skenario untuk dibandingkan."
+                     FontSize="13" Foreground="{StaticResource MutedBrush}" Margin="0,4,16,0" TextWrapping="Wrap"/>
+        </StackPanel>
+      </DockPanel>
+      <TextBlock x:Name="Status" FontSize="12" Foreground="{StaticResource MutedBrush}"
+                 Margin="0,12,0,0" TextWrapping="Wrap"/>
+      <Border Style="{StaticResource Card}" Margin="0,16,0,0" ClipToBounds="True">
+        <DataGrid x:Name="Tabel" AutoGenerateColumns="False" CanUserAddRows="False"
+                  CanUserDeleteRows="False" CanUserReorderColumns="False" CanUserSortColumns="False"
+                  HeadersVisibility="Column" RowHeaderWidth="0" GridLinesVisibility="Horizontal"
+                  HorizontalGridLinesBrush="{StaticResource BorderBrush}" BorderThickness="0"
+                  Background="Transparent" Foreground="{StaticResource InkBrush}" FontSize="12"
+                  RowHeight="46" ColumnHeaderHeight="42" SelectionMode="Single"
+                  HorizontalScrollBarVisibility="Auto">
+          <DataGrid.Resources>
+            <Style TargetType="DataGridColumnHeader">
+              <Setter Property="Background" Value="{StaticResource SubtleBrush}"/>
+              <Setter Property="Foreground" Value="{StaticResource MutedBrush}"/>
+              <Setter Property="FontSize" Value="11"/>
+              <Setter Property="Padding" Value="12,0"/>
+              <Setter Property="BorderThickness" Value="0"/>
+            </Style>
+            <Style TargetType="DataGridCell">
+              <Setter Property="BorderThickness" Value="0"/>
+              <Setter Property="Padding" Value="12,0"/>
+              <Setter Property="Template">
+                <Setter.Value>
+                  <ControlTemplate TargetType="DataGridCell">
+                    <Border Padding="{TemplateBinding Padding}" Background="{TemplateBinding Background}">
+                      <ContentPresenter VerticalAlignment="Center"/>
+                    </Border>
+                  </ControlTemplate>
+                </Setter.Value>
+              </Setter>
+            </Style>
+            <Style TargetType="DataGridRow">
+              <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
+              <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                  <Setter Property="Background" Value="{StaticResource AccentSoftBrush}"/>
+                </Trigger>
+              </Style.Triggers>
+            </Style>
+          </DataGrid.Resources>
+          <DataGrid.Columns>
+            <DataGridTemplateColumn Width="46">
+              <DataGridTemplateColumn.CellTemplate>
+                <DataTemplate>
+                  <CheckBox IsChecked="{Binding Dipilih, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                            Click="Pilihan_Click" VerticalAlignment="Center"
+                            AutomationProperties.Name="{Binding Nama}"/>
+                </DataTemplate>
+              </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
+            <DataGridTextColumn Header="Lokasi" Binding="{Binding Nama}" Width="2.2*" MinWidth="190" IsReadOnly="True"/>
+            <DataGridTextColumn Header="Luas atap" Binding="{Binding Luas}" Width="*" MinWidth="85" IsReadOnly="True"/>
+            <DataGridTextColumn Header="Kapasitas" Binding="{Binding Kapasitas}" Width="*" MinWidth="90" IsReadOnly="True"/>
+            <DataGridTextColumn Header="Balik modal" Binding="{Binding Payback}" Width="1.2*" MinWidth="100" IsReadOnly="True"/>
+            <DataGridTextColumn Header="Hemat/bulan" Binding="{Binding Hemat}" Width="1.3*" MinWidth="120" IsReadOnly="True">
+              <DataGridTextColumn.ElementStyle>
+                <Style TargetType="TextBlock"><Setter Property="Foreground" Value="{StaticResource GreenBrush}"/></Style>
+              </DataGridTextColumn.ElementStyle>
+            </DataGridTextColumn>
+            <DataGridTextColumn Header="Tanggal" Binding="{Binding Tanggal}" Width="1.2*" MinWidth="105" IsReadOnly="True"/>
+          </DataGrid.Columns>
+        </DataGrid>
+      </Border>
+      <TextBlock x:Name="Petunjuk" Text="Pilih 2–3 skenario, lalu klik Bandingkan."
+                 FontSize="12" Foreground="{StaticResource MutedBrush}" Margin="0,12,0,0"/>
+      <StackPanel x:Name="BagianPerbandingan" Visibility="Collapsed">
+        <TextBlock Text="Perbandingan Skenario" FontSize="16" FontWeight="SemiBold"
+                   Foreground="{StaticResource InkBrush}" Margin="0,24,0,16"/>
+        <ItemsControl x:Name="KartuPerbandingan">
+          <ItemsControl.ItemsPanel>
+            <ItemsPanelTemplate><UniformGrid Rows="1"/></ItemsPanelTemplate>
+          </ItemsControl.ItemsPanel>
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <Border Padding="20" Margin="0,0,12,0">
+                <Border.Style>
+                  <Style TargetType="Border" BasedOn="{StaticResource Card}">
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding Terbaik}" Value="True">
+                        <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </Border.Style>
+                <StackPanel>
+                  <TextBlock Text="{Binding Judul}" FontSize="15" FontWeight="SemiBold"
+                             Foreground="{StaticResource InkBrush}" TextWrapping="Wrap"/>
+                  <TextBlock Text="{Binding Keterangan}" Style="{StaticResource LabelMetrik}" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                  <TextBlock Text="Balik modal tercepat" FontSize="11" Foreground="{StaticResource AccentBrush}" Margin="0,8,0,0">
+                    <TextBlock.Style>
+                      <Style TargetType="TextBlock">
+                        <Setter Property="Visibility" Value="Hidden"/>
+                        <Style.Triggers><DataTrigger Binding="{Binding Terbaik}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers>
+                      </Style>
+                    </TextBlock.Style>
+                  </TextBlock>
+                  <UniformGrid Columns="2" Margin="0,14,0,0">
+                    <StackPanel Margin="0,0,8,14">
+                      <TextBlock Text="Produksi tahunan" Style="{StaticResource LabelMetrik}"/>
+                      <TextBlock Text="{Binding Produksi}" Style="{StaticResource NilaiMetrik}"/>
+                    </StackPanel>
+                    <StackPanel Margin="0,0,0,14">
+                      <TextBlock Text="Balik modal" Style="{StaticResource LabelMetrik}"/>
+                      <TextBlock Text="{Binding Payback}" Style="{StaticResource NilaiMetrik}" TextWrapping="Wrap"/>
+                    </StackPanel>
+                    <StackPanel Margin="0,0,8,0">
+                      <TextBlock Text="Hemat/bulan" Style="{StaticResource LabelMetrik}"/>
+                      <TextBlock Text="{Binding Hemat}" Style="{StaticResource NilaiMetrik}" Foreground="{StaticResource GreenBrush}" TextWrapping="Wrap"/>
+                    </StackPanel>
+                    <StackPanel>
+                      <TextBlock Text="Untung 25 thn" Style="{StaticResource LabelMetrik}"/>
+                      <TextBlock Text="{Binding Untung}" Style="{StaticResource NilaiMetrik}" Foreground="{StaticResource GreenBrush}" TextWrapping="Wrap"/>
+                    </StackPanel>
+                  </UniformGrid>
+                </StackPanel>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>
