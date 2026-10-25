@@ -61,6 +61,23 @@ public static class SelfCheck
         Debug.Assert(skenario.getRingkasan().StartsWith("Rumah Sleman:"), "ringkasan tidak memuat nama");
 
         CekPenyimpanan(skenario);
+        CekTampilanRiwayat();
+    }
+
+    private static void CekTampilanRiwayat()
+    {
+        var baris = new Views.RiwayatPage.Baris(new SimulasiSkenario("uji", "Rumah", new DateTime(2026, 9, 6),
+            5847, 14_880_000, double.PositiveInfinity, 5100));
+        Debug.Assert(baris.Hemat == "Rp 1.240.000", "riwayat harus mengubah penghematan tahunan ke bulanan");
+        Debug.Assert(baris.Payback == "Tidak balik modal", "payback tak hingga harus terbaca di riwayat");
+        Debug.Assert(baris.Luas == "—" && baris.Kapasitas == "—" && baris.Untung == "—",
+            "detail yang belum tersimpan tidak boleh ditebak");
+        int perubahan = 0;
+        baris.PropertyChanged += (_, _) => perubahan++;
+        baris.Dipilih = true;
+        baris.Dipilih = true;
+        baris.Dipilih = false;
+        Debug.Assert(perubahan == 2, "checkbox riwayat harus memperbarui pilihan hanya saat nilainya berubah");
     }
 
     private static void CekPenyimpanan(SimulasiSkenario s)
