@@ -9,9 +9,9 @@ public class RiwayatSimulasi
 {
     private List<SimulasiSkenario> daftarSkenario = new();
 
-    private readonly RepositoriSimulasi repositori;   // relasi «uses» pada class diagram
+    private readonly IRepositoriSimulasi repositori;   // relasi «uses» pada class diagram
 
-    public RiwayatSimulasi(RepositoriSimulasi repositori)
+    public RiwayatSimulasi(IRepositoriSimulasi repositori)
     {
         this.repositori = repositori;
     }

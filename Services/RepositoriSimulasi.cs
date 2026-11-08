@@ -8,10 +8,11 @@ using SunCost.Models;
 namespace SunCost.Services;
 
 /// <summary>Menyimpan skenario simulasi pada satu berkas SQLite di folder data aplikasi pengguna.</summary>
-public class RepositoriSimulasi
+public class RepositoriSimulasi : IRepositoriSimulasi
 {
-    private string connectionString;
-
+    public string Jenis => "SQLite";
+    
+    private readonly string connectionString;
     public RepositoriSimulasi(string? berkasDb = null)
     {
         berkasDb ??= Path.Combine(
