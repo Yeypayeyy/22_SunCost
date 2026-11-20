@@ -6,6 +6,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using Microsoft.Data.Sqlite;
+using Npgsql;
 using SunCost.Models;
 using SunCost.Services;
 
@@ -56,24 +57,26 @@ public partial class RiwayatPage : UserControl
         InitializeComponent();
         try
         {
-            var riwayat = new RiwayatSimulasi(new RepositoriSimulasi()).muatRiwayat();
+            // PostgreSQL bila variabel SUNCOST_PG terisi, selain itu SQLite lokal
+            var repositori = FabrikRepositori.Buat();
+            var riwayat = new RiwayatSimulasi(repositori).muatRiwayat();
             daftar = riwayat.Select(s => new Baris(s)).ToList();
             if (daftar.Count == 0)
             {
                 daftar = Contoh();
-                Status.Text = "Belum ada riwayat tersimpan. Menampilkan data contoh Figma; contoh ini tidak disimpan.";
+                Status.Text = "Sumber data: " + repositori.Jenis + ". Belum ada riwayat tersimpan. Menampilkan data contoh Figma; contoh ini tidak disimpan.";
                 daftar[0].Dipilih = daftar[1].Dipilih = true;
             }
             else
             {
                 // shortcut: riwayat lama tidak menyimpan detail atap dan proyeksi, tampilkan setelah data tersebut dipersistenkan.
-                Status.Text = "Luas atap, kapasitas, dan keuntungan 25 tahun belum tersedia pada data riwayat tersimpan (—).";
+                Status.Text = "Sumber data: " + repositori.Jenis + ". Luas atap, kapasitas, dan keuntungan 25 tahun belum tersedia pada data riwayat tersimpan (—).";
             }
             Tabel.ItemsSource = daftar;
             PerbaruiPilihan();
             if (daftar.Count(s => s.Dipilih) >= 2) TampilkanPerbandingan();
         }
-        catch (Exception ex) when (ex is SqliteException or IOException or UnauthorizedAccessException or FormatException)
+        catch (Exception ex) when (ex is SqliteException or NpgsqlException or IOException or UnauthorizedAccessException or FormatException)
         {
             Status.Text = "Riwayat tidak dapat dimuat. Periksa akses dan berkas penyimpanan lokal, lalu buka kembali halaman ini.";
             Petunjuk.Text = "Data tersimpan tidak diubah.";

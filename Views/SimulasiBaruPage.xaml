@@ -1,0 +1,96 @@
+﻿<UserControl x:Class="SunCost.Views.SimulasiBaruPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             FontFamily="Segoe UI">
+
+    <UserControl.Resources>
+        <Style x:Key="FieldLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="{StaticResource MutedBrush}"/>
+            <Setter Property="Margin" Value="0,16,0,6"/>
+        </Style>
+        <Style x:Key="FieldBox" TargetType="TextBox">
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+        </Style>
+        <Style x:Key="FieldCombo" TargetType="ComboBox">
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="FontSize" Value="14"/>
+        </Style>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="40,36">
+
+            <TextBlock Text="Simulasi Baru" FontSize="28" FontWeight="SemiBold"
+                 Foreground="{StaticResource InkBrush}"/>
+            <TextBlock Text="Isi data atap rumahmu. Hasil perhitungan tampil beserta asumsinya."
+                 FontSize="14" Foreground="{StaticResource MutedBrush}" Margin="0,6,0,24"/>
+
+            <Border Style="{StaticResource Card}" Padding="28" MaxWidth="640"
+              HorizontalAlignment="Left">
+                <StackPanel>
+
+                    <TextBlock Text="Nama lokasi" Style="{StaticResource FieldLabel}" Margin="0,0,0,6"/>
+                    <TextBox x:Name="TbLokasi" Style="{StaticResource FieldBox}"/>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="16"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Latitude (contoh -7,7956)" Style="{StaticResource FieldLabel}"/>
+                            <TextBox x:Name="TbLat" Style="{StaticResource FieldBox}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Longitude (contoh 110,3695)" Style="{StaticResource FieldLabel}"/>
+                            <TextBox x:Name="TbLon" Style="{StaticResource FieldBox}"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <TextBlock Text="Luas atap (m²)" Style="{StaticResource FieldLabel}"/>
+                    <TextBox x:Name="TbLuas" Style="{StaticResource FieldBox}"/>
+
+                    <TextBlock Text="Orientasi atap" Style="{StaticResource FieldLabel}"/>
+                    <ComboBox x:Name="CbOrientasi" Style="{StaticResource FieldCombo}" SelectedIndex="0">
+                        <ComboBoxItem Content="Utara" Tag="0"/>
+                        <ComboBoxItem Content="Timur Laut" Tag="45"/>
+                        <ComboBoxItem Content="Timur" Tag="90"/>
+                        <ComboBoxItem Content="Tenggara" Tag="135"/>
+                        <ComboBoxItem Content="Selatan" Tag="180"/>
+                        <ComboBoxItem Content="Barat Daya" Tag="225"/>
+                        <ComboBoxItem Content="Barat" Tag="270"/>
+                        <ComboBoxItem Content="Barat Laut" Tag="315"/>
+                    </ComboBox>
+
+                    <TextBlock Text="Kemiringan atap" Style="{StaticResource FieldLabel}"/>
+                    <StackPanel Orientation="Horizontal">
+                        <Slider x:Name="SlKemiringan" Minimum="0" Maximum="45" Value="15"
+                    TickFrequency="5" IsSnapToTickEnabled="True" Width="420"
+                    VerticalAlignment="Center"/>
+                        <TextBlock Margin="16,0,0,0" VerticalAlignment="Center" FontWeight="SemiBold"
+                       Foreground="{StaticResource InkBrush}"
+                       Text="{Binding Value, ElementName=SlKemiringan, StringFormat={}{0:0}°}"/>
+                    </StackPanel>
+
+                    <TextBlock Text="Golongan tarif PLN" Style="{StaticResource FieldLabel}"/>
+                    <ComboBox x:Name="CbTarif" Style="{StaticResource FieldCombo}" SelectedIndex="0">
+                        <ComboBoxItem Content="R-1 / 900 VA"/>
+                        <ComboBoxItem Content="R-1 / 1300 VA"/>
+                        <ComboBoxItem Content="R-1 / 2200 VA"/>
+                    </ComboBox>
+
+                    <Button Content="Hitung Simulasi" Style="{StaticResource PrimaryButton}"
+                  HorizontalAlignment="Left" Margin="0,28,0,0" Click="Hitung_Click"/>
+
+                    <TextBlock x:Name="TxtHasil" Margin="0,20,0,0" FontSize="14"
+                     Foreground="{StaticResource GreenBrush}" TextWrapping="Wrap"/>
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

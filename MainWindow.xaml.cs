@@ -1,5 +1,8 @@
+using System;
 using System.Windows;
 using System.Windows.Controls;
+using SunCost.Models;
+using SunCost.Services;
 using SunCost.Views;
 
 namespace SunCost;
@@ -24,8 +27,12 @@ public partial class MainWindow : Window
             0 => new BerandaPage(),
             1 => new HasilPage(),
             2 => new RiwayatPage(),
-            _ => new TextBlock { Text = "Halaman ini belum dibuat.", Margin = new Thickness(40, 36, 40, 36),
-                                 Foreground = (System.Windows.Media.Brush)FindResource("MutedBrush") }
+            _ => new TextBlock
+            {
+                Text = "Halaman ini belum dibuat.",
+                Margin = new Thickness(40, 36, 40, 36),
+                Foreground = (System.Windows.Media.Brush)FindResource("MutedBrush")
+            }
         };
     }
 }
