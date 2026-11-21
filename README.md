@@ -13,6 +13,16 @@ Kelompok SunCost
 <img width="1492" height="1210" alt="classdiagramsuncost drawio" src="https://github.com/user-attachments/assets/fc16da93-a955-4a9a-9121-40422acccbf2" />
 
 
+## Dokumentasi
+
+Rencana kerja, spesifikasi layar, dan catatan keputusan ada di [docs/](docs/README.md):
+
+- [Peta layar UI dan token desain](docs/specs/layar-ui.md)
+- [Rencana implementasi frontend](docs/plans/implementasi-fe.md) — jalur FE-A dan FE-B
+- [Rencana implementasi backend](docs/plans/implementasi-be.md) — BE-1 sampai BE-8
+- [ADR 0001 — asumsi perhitungan](docs/decisions/0001-asumsi-perhitungan.md)
+- [ERD basis data](docs/ERD.md)
+
 ## Detail Aplikasi
 
 - **Kategori:** Climate Action — energi terbarukan / kalkulator kelayakan investasi
