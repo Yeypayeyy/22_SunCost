@@ -1,70 +1,200 @@
+using System;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using SunCost.Models;
+using SunCost.Services;
 
 namespace SunCost.Views;
 
 public partial class HasilPage : UserControl
 {
-    private record Bar(string Bulan, double Tinggi, Brush WarnaBatang, Brush WarnaTeks, FontWeight Bobot, string Tooltip);
-    private record Item(string Nama, string Nilai, string Keterangan);
+    private record Bar(
+        string Bulan,
+        double Tinggi,
+        Brush WarnaBatang,
+        Brush WarnaTeks,
+        FontWeight Bobot,
+        string Tooltip);
 
-    private const double TinggiMaks = 204; // tinggi batang tertinggi di mockup Figma
+    private static readonly string[] Bulan =
+    {
+        "Jan", "Feb", "Mar", "Apr", "Mei", "Jun",
+        "Jul", "Ags", "Sep", "Okt", "Nov", "Des"
+    };
 
-    /// <summary>Suhu sel saat penyinaran penuh di iklim tropis: udara 27 °C + kenaikan NOCT 25 °C.</summary>
-    private const double SuhuSelPenyinaranPenuh = 52.0;
+    private const double TinggiMaks = 204;
 
     public HasilPage()
     {
         InitializeComponent();
+        SkeletonAsumsi.ItemsSource = new[]
+        {
+            "Peak Sun Hours (PSH)",
+            "Performance Ratio (PR)",
+            "Koreksi suhu"
+        };
+        TampilkanMemuat();
+    }
 
-        // Data contoh dari mockup. Diganti hasil KalkulatorEnergi.hitungProduksiBulanan() saat halaman Simulasi Baru jadi.
-        string[] bulan = { "Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des" };
-        double[] produksi = { 456, 435, 472, 483, 499, 504, 542, 547, 523, 491, 451, 444 };
-        double tagihanBulanan = 594; // kWh, konsumsi rata-rata dari tagihan pengguna
+    public HasilPage(SimulasiSkenario skenario) : this()
+    {
+        TampilkanHasil(skenario, dataCadangan: false);
+    }
 
-        double total = produksi.Sum(), maks = produksi.Max();
-        Ringkasan.Text = "Sleman, DIY  ·  atap 32 m², orientasi utara, kemiringan 15°  ·  4,2 kWp";
-        ProduksiTahunan.Text = total.ToString("#,##0", FormatId.Angka);
-        RataBulanan.Text = (total / 12).ToString("#,##0", FormatId.Angka);
-        SetaraKonsumsi.Text = (total / 12 / tagihanBulanan).ToString("0%", FormatId.Angka);
+    public void TampilkanMemuat(string? lokasi = null)
+    {
+        TabEnergi.IsChecked = true;
+        Ringkasan.Text = "Memuat data radiasi";
+        PesanMemuat.Text = string.IsNullOrWhiteSpace(lokasi)
+            ? "Mengambil data radiasi Open-Meteo. Biasanya 5–20 detik."
+            : $"Mengambil data radiasi Open-Meteo untuk {lokasi}. Biasanya 5–20 detik.";
 
+        AturSkeleton(true);
+
+        var track = (Brush)FindResource("TrackBrush");
+        var redup = (Brush)FindResource("MutedBrush");
+
+        Batang.ItemsSource = Bulan.Select(nama =>
+            new Bar(nama, 124, track, redup, FontWeights.Normal, "Memuat…")).ToArray();
+
+        Asumsi.ItemsSource = null;
+        BannerCadangan.Visibility = Visibility.Collapsed;
+    }
+
+    private void AturSkeleton(bool memuat)
+    {
+        var skeleton = memuat ? Visibility.Visible : Visibility.Collapsed;
+        var angka = memuat ? Visibility.Hidden : Visibility.Visible;
+
+        BannerMemuat.Visibility = skeleton;
+        SkeletonTahunan.Visibility = skeleton;
+        SkeletonBulanan.Visibility = skeleton;
+        SkeletonKonsumsi.Visibility = skeleton;
+
+        ProduksiTahunan.Visibility = angka;
+        RataBulanan.Visibility = angka;
+        SetaraKonsumsi.Visibility = angka;
+        TabFinansial.IsEnabled = !memuat;
+
+        SkeletonAsumsi.Visibility = skeleton;
+        Asumsi.Visibility = memuat ? Visibility.Collapsed : Visibility.Visible;
+    }
+
+    public void TampilkanHasil(SimulasiSkenario skenario, bool dataCadangan)
+    {
+        ArgumentNullException.ThrowIfNull(skenario);
+        AturSkeleton(false);
+
+        Ringkasan.Text = skenario.Nama;
+        ProduksiTahunan.Text = skenario.ProduksiTahunan.ToString("#,##0", FormatId.Angka);
+        RataBulanan.Text = (skenario.ProduksiTahunan / 12).ToString("#,##0", FormatId.Angka);
+        SetaraKonsumsi.Text = "—";
+
+        if (skenario.KapasitasKwp is double kapasitas)
+        {
+            Ringkasan.Text += $" · {kapasitas.ToString("0.##", FormatId.Angka)} kWp";
+        }
+
+        Batang.ItemsSource = null;
+
+        if (skenario.ProduksiBulanan.Count == Bulan.Length)
+        {
+            TampilkanBatang(skenario.ProduksiBulanan.ToArray());
+        }
+        TampilkanFinansial(skenario);
+        TampilkanBannerCadangan(dataCadangan);
+    }
+
+    private void TampilkanBatang(double[] produksi)
+    {
+        double maksimum = produksi.Max();
         var aksen = (Brush)FindResource("AccentBrush");
         var batang = (Brush)FindResource("BarBrush");
         var tinta = (Brush)FindResource("InkBrush");
         var redup = (Brush)FindResource("MutedBrush");
 
-        Batang.ItemsSource = bulan.Select((b, i) =>
+        Batang.ItemsSource = Bulan.Select((nama, indeks) =>
         {
-            bool puncak = produksi[i] == maks;
-            return new Bar(b, produksi[i] / maks * TinggiMaks,
-                puncak ? aksen : batang, puncak ? tinta : redup,
+            double nilai = produksi[indeks];
+            bool puncak = maksimum > 0 && nilai == maksimum;
+            double tinggi = maksimum > 0 ? nilai / maksimum * TinggiMaks : 0;
+
+            return new Bar(
+                nama,
+                tinggi,
+                puncak ? aksen : batang,
+                puncak ? tinta : redup,
                 puncak ? FontWeights.SemiBold : FontWeights.Normal,
-                produksi[i].ToString("#,##0", FormatId.Angka) + " kWh");
-        }).ToList();
-
-        // Panel yang disimulasikan. Variabelnya bertipe PanelSurya, jadi baris "Koreksi suhu"
-        // di bawah diisi rumus milik jenis panel yang sedang dipakai (polimorfisme).
-        PanelSurya panel = new PanelMonokristal("Contoh 550", 550, 21.3, koefisienSuhu: 0.4,
-                                                luasPerPanel: 2.6, hargaPerUnit: 2_750_000);
-        double koreksiSuhu = panel.hitungKoreksiSuhu(SuhuSelPenyinaranPenuh);
-
-        Asumsi.ItemsSource = new[]
-        {
-            new Item("Peak Sun Hours (PSH)", "4,6 jam/hari", "Rata-rata radiasi harian Open-Meteo, 10 tahun terakhir"),
-            new Item("Performance Ratio (PR)", "0,78", "Rugi inverter, kabel, kotoran, dan bayangan"),
-            new Item("Jenis panel", panel.Jenis, panel.Merk + ", menentukan rumus koreksi suhu yang dipakai"),
-            new Item("Koreksi suhu", koreksiSuhu.ToString("0.0%", FormatId.Angka) + " pada sel 52 °C",
-                     "Rugi panas untuk setiap °C di atas 25 °C, signifikan di iklim tropis"),
-            new Item("Degradasi panel", "−0,5% / tahun", "Penurunan output panel sepanjang umur pakai"),
-        };
+                nilai.ToString("#,##0", FormatId.Angka) + " kWh");
+        }).ToArray();
     }
 
-    private void TabFinansial_Checked(object sender, RoutedEventArgs e)
+    private record MetrikFinansial(string Nama, string Nilai);
+
+    private void Tab_Checked(object sender, RoutedEventArgs e)
     {
-        MessageBox.Show("Tab Finansial & Lingkungan belum dibuat.", "SunCost");
-        TabEnergi.IsChecked = true;
+        // Checked bisa terpanggil sebelum semua kontrol XAML dibuat.
+        if (PanelFinansial is null || KpiEnergi is null || DetailEnergi is null)
+            return;
+
+        bool finansialAktif = TabFinansial.IsChecked == true;
+
+        PanelFinansial.Visibility = finansialAktif
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+
+        KpiEnergi.Visibility = DetailEnergi.Visibility = finansialAktif
+            ? Visibility.Collapsed
+            : Visibility.Visible;
     }
+
+    private void TampilkanFinansial(SimulasiSkenario skenario)
+    {
+        string balikModal = double.IsFinite(skenario.PaybackPeriod)
+            ? skenario.PaybackPeriod.ToString("0.0", FormatId.Angka) + " tahun"
+            : "Tidak balik modal dalam 25 tahun";
+
+        KpiFinansial.ItemsSource = new[]
+        {
+        new MetrikFinansial("Biaya instalasi", Rupiah(skenario.BiayaInstalasi)),
+        new MetrikFinansial("Hemat per bulan", Rupiah(skenario.PenghematanTahunan / 12)),
+        new MetrikFinansial("Balik modal", balikModal),
+        new MetrikFinansial("Keuntungan bersih 25 tahun", Rupiah(skenario.Keuntungan25Tahun))
+    };
+
+        double emisi = skenario.EmisiDihindari;
+        int pohon = new DampakLingkungan().setaraPohon(emisi);
+
+        EmisiTahunan.Text =
+            $"{emisi.ToString("#,##0", FormatId.Angka)} kg CO₂ dihindari per tahun";
+        SetaraPohon.Text =
+            $"Setara {pohon.ToString("#,##0", FormatId.Angka)} pohon";
+    }
+
+    private record AsumsiTampilan(string Nama, string Nilai, string Keterangan);
+
+    private void TampilkanBannerCadangan(bool dataCadangan)
+    {
+        BannerCadangan.Visibility = dataCadangan
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+
+        Asumsi.ItemsSource = dataCadangan
+            ? new[]
+            {
+            new AsumsiTampilan(
+                "Peak Sun Hours (PSH)",
+                "4,5 jam/hari",
+                "Cadangan rata-rata Indonesia — API tidak terjangkau")
+            }
+            : null;
+
+        if (dataCadangan)
+            Ringkasan.Text += " · data cadangan";
+    }
+
+    private static string Rupiah(double? nilai) =>
+        nilai is double angka ? "Rp " + angka.ToString("#,##0", FormatId.Angka) : "—";
 }
