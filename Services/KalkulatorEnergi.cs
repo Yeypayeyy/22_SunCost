@@ -13,7 +13,6 @@ public class KalkulatorEnergi
     private const double KenaikanSuhuSel = 25.0;
 
     private double performanceRatio = 0.80;  // rugi inverter, kabel, kotoran, dan mismatch
-    private double suhuReferensi = 25.0;     // suhu uji standar (STC) panel
 
     // Objek yang dipakai perhitungan (relasi «uses» pada class diagram).
     private readonly Lokasi lokasi;
@@ -40,13 +39,12 @@ public class KalkulatorEnergi
         return panel.hitungKapasitasTotal(jumlah) / 1000.0;
     }
 
-    /// <summary>Faktor pengali akibat panas: 1,0 pada suhu referensi, turun sebesar koefisien suhu per derajat.</summary>
-    public double hitungKoreksiSuhu(double suhu, PanelSurya panel)
-    {
-        double suhuSel = suhu + KenaikanSuhuSel;
-        double rugiPanas = Math.Max(0, suhuSel - suhuReferensi) * panel.KoefisienSuhu / 100;
-        return Math.Max(0.3, 1 - rugiPanas);
-    }
+    /// <summary>
+    /// Faktor pengali akibat panas. Kalkulator hanya mengubah suhu udara menjadi suhu sel;
+    /// rumus koreksinya milik panel, jadi tiap jenis panel menjawab panggilan yang sama dengan caranya sendiri.
+    /// </summary>
+    public double hitungKoreksiSuhu(double suhu, PanelSurya panel) =>
+        panel.hitungKoreksiSuhu(suhu + KenaikanSuhuSel);
 
     /// <summary>Energi bulan ke-1..12 (kWh) = kWp x PSH bulan itu x jumlah hari x PR x koreksi suhu.</summary>
     public double hitungProduksiBulanan(int bulan) =>

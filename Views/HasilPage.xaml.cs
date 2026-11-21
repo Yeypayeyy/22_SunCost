@@ -13,6 +13,9 @@ public partial class HasilPage : UserControl
 
     private const double TinggiMaks = 204; // tinggi batang tertinggi di mockup Figma
 
+    /// <summary>Suhu sel saat penyinaran penuh di iklim tropis: udara 27 °C + kenaikan NOCT 25 °C.</summary>
+    private const double SuhuSelPenyinaranPenuh = 52.0;
+
     public HasilPage()
     {
         InitializeComponent();
@@ -42,11 +45,19 @@ public partial class HasilPage : UserControl
                 produksi[i].ToString("#,##0", FormatId.Angka) + " kWh");
         }).ToList();
 
+        // Panel yang disimulasikan. Variabelnya bertipe PanelSurya, jadi baris "Koreksi suhu"
+        // di bawah diisi rumus milik jenis panel yang sedang dipakai (polimorfisme).
+        PanelSurya panel = new PanelMonokristal("Contoh 550", 550, 21.3, koefisienSuhu: 0.4,
+                                                luasPerPanel: 2.6, hargaPerUnit: 2_750_000);
+        double koreksiSuhu = panel.hitungKoreksiSuhu(SuhuSelPenyinaranPenuh);
+
         Asumsi.ItemsSource = new[]
         {
             new Item("Peak Sun Hours (PSH)", "4,6 jam/hari", "Rata-rata radiasi harian Open-Meteo, 10 tahun terakhir"),
             new Item("Performance Ratio (PR)", "0,78", "Rugi inverter, kabel, kotoran, dan bayangan"),
-            new Item("Koreksi suhu", "−0,4% / °C", "Untuk setiap °C di atas 25 °C — signifikan di iklim tropis"),
+            new Item("Jenis panel", panel.Jenis, panel.Merk + ", menentukan rumus koreksi suhu yang dipakai"),
+            new Item("Koreksi suhu", koreksiSuhu.ToString("0.0%", FormatId.Angka) + " pada sel 52 °C",
+                     "Rugi panas untuk setiap °C di atas 25 °C, signifikan di iklim tropis"),
             new Item("Degradasi panel", "−0,5% / tahun", "Penurunan output panel sepanjang umur pakai"),
         };
     }

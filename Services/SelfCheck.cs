@@ -16,7 +16,7 @@ public static class SelfCheck
     public static void Jalankan()
     {
         var lokasi = new Lokasi("Sleman", -7.72, 110.36, luasAtap: 40, orientasi: 0, kemiringan: 15);
-        var panel = new PanelSurya("Contoh 550", 550, 21.3, koefisienSuhu: 0.4, luasPerPanel: 2.6, hargaPerUnit: 2_750_000);
+        PanelSurya panel = new PanelMonokristal("Contoh 550", 550, 21.3, koefisienSuhu: 0.4, luasPerPanel: 2.6, hargaPerUnit: 2_750_000);
         var radiasi = new DataRadiasi(Enumerable.Repeat(4.5, 12).ToList(), 27, "uji", DateTime.Now);
         var tarif = new TarifListrikPLN("R-1/TR 1.300 VA", 1444.70, new DateTime(2025, 1, 1));
 
@@ -31,6 +31,8 @@ public static class SelfCheck
 
         // Udara 27 C -> sel 52 C -> rugi (52 - 25) x 0,4% = 10,8%.
         Debug.Assert(Math.Abs(kalkulator.hitungKoreksiSuhu(27, panel) - 0.892) < 1e-9, "koreksi suhu meleset");
+
+        CekPolimorfismePanel(kalkulator, panel);
 
         // Produksi wajar untuk PLTS di Indonesia: 1.100-1.600 kWh per kWp per tahun.
         double produksi = kalkulator.hitungProduksiTahunan();
@@ -64,13 +66,43 @@ public static class SelfCheck
         CekTampilanRiwayat();
     }
 
+    /// <summary>
+    /// Satu panggilan method yang sama (hitungKoreksiSuhu) harus memberi hasil berbeda
+    /// sesuai jenis panel yang sedang dipegang: itu polimorfisme yang dipakai kalkulator.
+    /// </summary>
+    private static void CekPolimorfismePanel(KalkulatorEnergi kalkulator, PanelSurya mono)
+    {
+        PanelSurya thinFilm = new PanelThinFilm("Contoh TF 550", 550, 21.3, koefisienSuhu: 0.4,
+                                                luasPerPanel: 2.6, hargaPerUnit: 2_750_000);
+
+        Debug.Assert(mono.Jenis == "Monokristalin" && thinFilm.Jenis == "Thin film (a-Si)",
+            "jenis panel harus dijawab masing-masing turunan");
+
+        // Spesifikasi identik, hanya teknologi selnya beda: thin film menahan panas lebih baik.
+        double koreksiMono = kalkulator.hitungKoreksiSuhu(27, mono);
+        double koreksiThin = kalkulator.hitungKoreksiSuhu(27, thinFilm);
+        Debug.Assert(koreksiThin > koreksiMono,
+            $"thin film mestinya lebih tahan panas: mono {koreksiMono}, thin film {koreksiThin}");
+
+        // Sel 52 C -> annealing (52 - 40) x 0,1% = 1,2% di atas rumus kristalin 0,892.
+        Debug.Assert(Math.Abs(koreksiThin - 0.904) < 1e-9, $"koreksi thin film meleset: {koreksiThin}");
+
+        // Di bawah suhu annealing kedua panel kembali sama.
+        Debug.Assert(mono.hitungKoreksiSuhu(35).Equals(thinFilm.hitungKoreksiSuhu(35)),
+            "di bawah 40 C thin film harus memakai rumus warisan dari class dasar");
+
+        // Method bukan-virtual tetap diwarisi apa adanya oleh kedua turunan.
+        Debug.Assert(thinFilm.hitungJumlahPanel(30) == mono.hitungJumlahPanel(30),
+            "hitungJumlahPanel diwarisi, tidak boleh beda");
+    }
+
     private static void CekTampilanRiwayat()
     {
         var baris = new Views.RiwayatPage.Baris(new SimulasiSkenario("uji", "Rumah", new DateTime(2026, 9, 6),
             5847, 14_880_000, double.PositiveInfinity, 5100));
         Debug.Assert(baris.Hemat == "Rp 1.240.000", "riwayat harus mengubah penghematan tahunan ke bulanan");
         Debug.Assert(baris.Payback == "Tidak balik modal", "payback tak hingga harus terbaca di riwayat");
-        Debug.Assert(baris.Luas == "—" && baris.Kapasitas == "—" && baris.Untung == "—",
+        Debug.Assert(baris.Luas == "-" && baris.Kapasitas == "-" && baris.Untung == "-",
             "detail yang belum tersimpan tidak boleh ditebak");
         int perubahan = 0;
         baris.PropertyChanged += (_, _) => perubahan++;
