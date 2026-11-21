@@ -13,6 +13,9 @@ public class AnalisisFinansial
     private double penghematanBulanan;  // rupiah pada tahun pertama
     private double degradasiTahunan;    // penurunan produksi panel, persen per tahun
 
+    private bool biayaSudahDihitung;
+    private bool penghematanSudahDihitung;
+
     public AnalisisFinansial(double biayaPerWp, double degradasiTahunan = 0.5)
     {
         this.biayaPerWp = biayaPerWp;
@@ -22,6 +25,7 @@ public class AnalisisFinansial
     public double hitungBiayaInstalasi(double kapasitasWp)
     {
         biayaInstalasi = kapasitasWp * biayaPerWp;
+        biayaSudahDihitung = true;
         return biayaInstalasi;
     }
 
@@ -29,7 +33,15 @@ public class AnalisisFinansial
     public double hitungPenghematanBulanan(double produksi, TarifListrikPLN tarif)
     {
         penghematanBulanan = tarif.hitungBiaya(produksi);
+        penghematanSudahDihitung = true;
         return penghematanBulanan;
+    }
+
+    private void PastikanSiap()
+    {
+        if (!biayaSudahDihitung || !penghematanSudahDihitung)
+            throw new InvalidOperationException(
+                "Panggil hitungBiayaInstalasi dan hitungPenghematanBulanan terlebih dahulu.");
     }
 
     /// <summary>
@@ -38,6 +50,7 @@ public class AnalisisFinansial
     /// </summary>
     public double hitungPaybackPeriod()
     {
+        PastikanSiap();
         double kumulatif = 0;
         for (int tahun = 0; tahun < UmurSistemTahun; tahun++)
         {
@@ -55,6 +68,7 @@ public class AnalisisFinansial
     /// <summary>Total penghematan 25 tahun dikurangi biaya instalasi.</summary>
     public double proyeksiKeuntungan25Tahun()
     {
+        PastikanSiap();
         double total = 0;
         for (int tahun = 0; tahun < UmurSistemTahun; tahun++)
             total += penghematanBulanan * 12 * Math.Pow(1 - degradasiTahunan / 100, tahun);
