@@ -76,6 +76,13 @@ Debug.Assert(ditolak, "bulan 13 mestinya ditolak");
         Debug.Assert(Math.Abs(skenario.PaybackPeriod - payback) < 1e-9, "payback skenario beda dengan analisis langsung");
         Debug.Assert(skenario.getRingkasan().StartsWith("Rumah Sleman:"), "ringkasan tidak memuat nama");
 
+        Debug.Assert(skenario.ProduksiBulanan.Count == 12, "skenario harus menyimpan 12 nilai bulanan");
+Debug.Assert(Math.Abs(skenario.ProduksiBulanan.Sum() - skenario.ProduksiTahunan) < 1e-6, "jumlah bulanan harus sama dengan produksi tahunan");
+Debug.Assert(skenario.KapasitasKwp is { } kapasitasSkenario && Math.Abs(kapasitasSkenario - 6.05) < 1e-9, "kapasitas skenario meleset");
+Debug.Assert(skenario.JumlahPanel == 11, "jumlah panel skenario meleset");
+Debug.Assert(skenario.BiayaInstalasi is { } biayaSkenario && Math.Abs(biayaSkenario - 6050 * 15_000) < 1e-6, "biaya instalasi skenario meleset (cek satuan Wp/kWp)");
+Debug.Assert(skenario.Keuntungan25Tahun > 0, "keuntungan 25 tahun mestinya positif");
+
         CekPenyimpanan(skenario);
         CekTampilanRiwayat();
     }
@@ -116,6 +123,10 @@ Debug.Assert(ditolak, "bulan 13 mestinya ditolak");
             Debug.Assert(double.IsPositiveInfinity(dimuat[1].PaybackPeriod), "payback tak hingga hilang di database");
             Debug.Assert(riwayat.bandingkanSkenario(dimuat[1], dimuat[0]).StartsWith("Rumah Sleman balik modal lebih cepat"),
                 "perbandingan salah memilih skenario");
+
+                var rugi2 = new SimulasiSkenario("rugi2", "Sama-sama rugi", DateTime.Now, 1, 1, double.PositiveInfinity, 1);
+Debug.Assert(riwayat.bandingkanSkenario(dimuat[1], rugi2).Contains("sama-sama tidak balik modal"),
+    "dua skenario tanpa balik modal harus dilaporkan sama-sama rugi");
 
             var repo = new RepositoriSimulasi(berkas);
             Debug.Assert(repo.ambilById(s.Id)?.Nama == "Rumah Sleman", "ambilById tidak menemukan skenario");
