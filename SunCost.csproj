@@ -3,6 +3,7 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
+	  <DefaultItemExcludes>$(DefaultItemExcludes);SunCost/**</DefaultItemExcludes>
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
     <RootNamespace>SunCost</RootNamespace>
