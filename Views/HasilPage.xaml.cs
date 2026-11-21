@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -8,47 +9,81 @@ namespace SunCost.Views;
 
 public partial class HasilPage : UserControl
 {
-    private record Bar(string Bulan, double Tinggi, Brush WarnaBatang, Brush WarnaTeks, FontWeight Bobot, string Tooltip);
-    private record Item(string Nama, string Nilai, string Keterangan);
+    private record Bar(
+        string Bulan,
+        double Tinggi,
+        Brush WarnaBatang,
+        Brush WarnaTeks,
+        FontWeight Bobot,
+        string Tooltip);
 
-    private const double TinggiMaks = 204; // tinggi batang tertinggi di mockup Figma
+    private static readonly string[] Bulan =
+    {
+        "Jan", "Feb", "Mar", "Apr", "Mei", "Jun",
+        "Jul", "Ags", "Sep", "Okt", "Nov", "Des"
+    };
+
+    private const double TinggiMaks = 204;
 
     public HasilPage()
     {
         InitializeComponent();
 
-        // Data contoh dari mockup. Diganti hasil KalkulatorEnergi.hitungProduksiBulanan() saat halaman Simulasi Baru jadi.
-        string[] bulan = { "Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des" };
-        double[] produksi = { 456, 435, 472, 483, 499, 504, 542, 547, 523, 491, 451, 444 };
-        double tagihanBulanan = 594; // kWh, konsumsi rata-rata dari tagihan pengguna
+        Ringkasan.Text = "Menunggu hasil simulasi…";
+        ProduksiTahunan.Text = "—";
+        RataBulanan.Text = "—";
+        SetaraKonsumsi.Text = "—";
+    }
 
-        double total = produksi.Sum(), maks = produksi.Max();
-        Ringkasan.Text = "Sleman, DIY  ·  atap 32 m², orientasi utara, kemiringan 15°  ·  4,2 kWp";
-        ProduksiTahunan.Text = total.ToString("#,##0", FormatId.Angka);
-        RataBulanan.Text = (total / 12).ToString("#,##0", FormatId.Angka);
-        SetaraKonsumsi.Text = (total / 12 / tagihanBulanan).ToString("0%", FormatId.Angka);
+    public HasilPage(SimulasiSkenario skenario) : this()
+    {
+        TampilkanHasil(skenario, dataCadangan: false);
+    }
 
+    public void TampilkanHasil(SimulasiSkenario skenario, bool dataCadangan)
+    {
+        ArgumentNullException.ThrowIfNull(skenario);
+
+        Ringkasan.Text = skenario.Nama;
+        ProduksiTahunan.Text = skenario.ProduksiTahunan.ToString("#,##0", FormatId.Angka);
+        RataBulanan.Text = (skenario.ProduksiTahunan / 12).ToString("#,##0", FormatId.Angka);
+        SetaraKonsumsi.Text = "—";
+
+        if (skenario.KapasitasKwp is double kapasitas)
+        {
+            Ringkasan.Text += $" · {kapasitas.ToString("0.##", FormatId.Angka)} kWp";
+        }
+
+        Batang.ItemsSource = null;
+
+        if (skenario.ProduksiBulanan.Count == Bulan.Length)
+        {
+            TampilkanBatang(skenario.ProduksiBulanan.ToArray());
+        }
+    }
+
+    private void TampilkanBatang(double[] produksi)
+    {
+        double maksimum = produksi.Max();
         var aksen = (Brush)FindResource("AccentBrush");
         var batang = (Brush)FindResource("BarBrush");
         var tinta = (Brush)FindResource("InkBrush");
         var redup = (Brush)FindResource("MutedBrush");
 
-        Batang.ItemsSource = bulan.Select((b, i) =>
+        Batang.ItemsSource = Bulan.Select((nama, indeks) =>
         {
-            bool puncak = produksi[i] == maks;
-            return new Bar(b, produksi[i] / maks * TinggiMaks,
-                puncak ? aksen : batang, puncak ? tinta : redup,
-                puncak ? FontWeights.SemiBold : FontWeights.Normal,
-                produksi[i].ToString("#,##0", FormatId.Angka) + " kWh");
-        }).ToList();
+            double nilai = produksi[indeks];
+            bool puncak = maksimum > 0 && nilai == maksimum;
+            double tinggi = maksimum > 0 ? nilai / maksimum * TinggiMaks : 0;
 
-        Asumsi.ItemsSource = new[]
-        {
-            new Item("Peak Sun Hours (PSH)", "4,6 jam/hari", "Rata-rata radiasi harian Open-Meteo, 10 tahun terakhir"),
-            new Item("Performance Ratio (PR)", "0,78", "Rugi inverter, kabel, kotoran, dan bayangan"),
-            new Item("Koreksi suhu", "−0,4% / °C", "Untuk setiap °C di atas 25 °C — signifikan di iklim tropis"),
-            new Item("Degradasi panel", "−0,5% / tahun", "Penurunan output panel sepanjang umur pakai"),
-        };
+            return new Bar(
+                nama,
+                tinggi,
+                puncak ? aksen : batang,
+                puncak ? tinta : redup,
+                puncak ? FontWeights.SemiBold : FontWeights.Normal,
+                nilai.ToString("#,##0", FormatId.Angka) + " kWh");
+        }).ToArray();
     }
 
     private void TabFinansial_Checked(object sender, RoutedEventArgs e)
