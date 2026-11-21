@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using SunCost.Models;
+using SunCost.Services;
 
 namespace SunCost.Views;
 
@@ -60,6 +61,7 @@ public partial class HasilPage : UserControl
         {
             TampilkanBatang(skenario.ProduksiBulanan.ToArray());
         }
+        TampilkanFinansial(skenario);
     }
 
     private void TampilkanBatang(double[] produksi)
@@ -86,9 +88,48 @@ public partial class HasilPage : UserControl
         }).ToArray();
     }
 
-    private void TabFinansial_Checked(object sender, RoutedEventArgs e)
+    private record MetrikFinansial(string Nama, string Nilai);
+
+    private void Tab_Checked(object sender, RoutedEventArgs e)
     {
-        MessageBox.Show("Tab Finansial & Lingkungan belum dibuat.", "SunCost");
-        TabEnergi.IsChecked = true;
+        // Checked bisa terpanggil sebelum semua kontrol XAML dibuat.
+        if (PanelFinansial is null || KpiEnergi is null || DetailEnergi is null)
+            return;
+
+        bool finansialAktif = TabFinansial.IsChecked == true;
+
+        PanelFinansial.Visibility = finansialAktif
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+
+        KpiEnergi.Visibility = DetailEnergi.Visibility = finansialAktif
+            ? Visibility.Collapsed
+            : Visibility.Visible;
     }
+
+    private void TampilkanFinansial(SimulasiSkenario skenario)
+    {
+        string balikModal = double.IsFinite(skenario.PaybackPeriod)
+            ? skenario.PaybackPeriod.ToString("0.0", FormatId.Angka) + " tahun"
+            : "Tidak balik modal dalam 25 tahun";
+
+        KpiFinansial.ItemsSource = new[]
+        {
+        new MetrikFinansial("Biaya instalasi", Rupiah(skenario.BiayaInstalasi)),
+        new MetrikFinansial("Hemat per bulan", Rupiah(skenario.PenghematanTahunan / 12)),
+        new MetrikFinansial("Balik modal", balikModal),
+        new MetrikFinansial("Keuntungan bersih 25 tahun", Rupiah(skenario.Keuntungan25Tahun))
+    };
+
+        double emisi = skenario.EmisiDihindari;
+        int pohon = new DampakLingkungan().setaraPohon(emisi);
+
+        EmisiTahunan.Text =
+            $"{emisi.ToString("#,##0", FormatId.Angka)} kg CO₂ dihindari per tahun";
+        SetaraPohon.Text =
+            $"Setara {pohon.ToString("#,##0", FormatId.Angka)} pohon";
+    }
+
+    private static string Rupiah(double? nilai) =>
+        nilai is double angka ? "Rp " + angka.ToString("#,##0", FormatId.Angka) : "—";
 }

@@ -24,14 +24,14 @@
             Padding="4,4,0,4" Margin="0,20,0,0" HorizontalAlignment="Left">
       <StackPanel Orientation="Horizontal">
         <RadioButton x:Name="TabEnergi" Content="Energi" GroupName="HasilTab" IsChecked="True"
-                     Style="{StaticResource SegmentTab}"/>
+                     Style="{StaticResource SegmentTab}" Checked="Tab_Checked"/>
         <RadioButton x:Name="TabFinansial" Content="Finansial &amp; Lingkungan" GroupName="HasilTab"
-                     Style="{StaticResource SegmentTab}" Checked="TabFinansial_Checked"/>
+                     Style="{StaticResource SegmentTab}" Checked="Tab_Checked"/>
       </StackPanel>
     </Border>
 
     <!-- KPI -->
-    <UniformGrid Grid.Row="2" Rows="1" Margin="0,20,-16,0">
+        <UniformGrid Grid.Row="2" Rows="1" Margin="0,20,-16,0" x:Name="KpiEnergi">
       <Border Style="{StaticResource Card}" Background="{StaticResource AccentSoftBrush}"
               BorderBrush="{StaticResource AccentSoftBrush}" Padding="24,22" Margin="0,0,16,0"
               VerticalAlignment="Top">
@@ -61,82 +61,125 @@
     </UniformGrid>
 
     <!-- Grafik + Asumsi -->
-    <Grid Grid.Row="3" Margin="0,20,0,0">
-      <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="*"/>
-        <ColumnDefinition Width="16"/>
-        <ColumnDefinition Width="340"/>
-      </Grid.ColumnDefinitions>
+        <Grid Grid.Row="3" Margin="0,20,0,0" x:Name="DetailEnergi">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="16"/>
+                <ColumnDefinition Width="340"/>
+            </Grid.ColumnDefinitions>
 
-      <Border Grid.Column="0" Style="{StaticResource Card}" Padding="24,22">
-        <Grid>
-          <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-          </Grid.RowDefinitions>
-          <StackPanel>
-            <TextBlock Text="Produksi Energi per Bulan" FontSize="15" FontWeight="SemiBold"
+            <Border Grid.Column="0" Style="{StaticResource Card}" Padding="24,22">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="Produksi Energi per Bulan" FontSize="15" FontWeight="SemiBold"
                        Foreground="{StaticResource InkBrush}"/>
-            <TextBlock Text="kWh · musim kemarau (Jul–Sep) menghasilkan paling banyak"
+                        <TextBlock Text="kWh · musim kemarau (Jul–Sep) menghasilkan paling banyak"
                        FontSize="12" Foreground="{StaticResource MutedBrush}" Margin="0,2,0,0"/>
-          </StackPanel>
+                    </StackPanel>
 
-          <ItemsControl x:Name="Batang" Grid.Row="1" Margin="0,18,-10,0">
-            <ItemsControl.ItemsPanel>
-              <ItemsPanelTemplate>
-                <UniformGrid Rows="1"/>
-              </ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
-            <ItemsControl.ItemTemplate>
-              <DataTemplate>
-                <DockPanel Margin="0,0,10,0" ToolTip="{Binding Tooltip}">
-                  <TextBlock DockPanel.Dock="Bottom" Text="{Binding Bulan}" FontSize="11"
+                    <ItemsControl x:Name="Batang" Grid.Row="1" Margin="0,18,-10,0">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Rows="1"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <DockPanel Margin="0,0,10,0" ToolTip="{Binding Tooltip}">
+                                    <TextBlock DockPanel.Dock="Bottom" Text="{Binding Bulan}" FontSize="11"
                              FontWeight="{Binding Bobot}" Foreground="{Binding WarnaTeks}"
                              HorizontalAlignment="Center" Margin="0,8,0,0"/>
-                  <Border VerticalAlignment="Bottom" Height="{Binding Tinggi}"
+                                    <Border VerticalAlignment="Bottom" Height="{Binding Tinggi}"
                           Background="{Binding WarnaBatang}" CornerRadius="5,5,0,0"/>
-                </DockPanel>
-              </DataTemplate>
-            </ItemsControl.ItemTemplate>
-          </ItemsControl>
-        </Grid>
-      </Border>
+                                </DockPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Grid>
+            </Border>
 
-      <Border Grid.Column="2" Style="{StaticResource Card}" Padding="22">
-        <StackPanel>
-          <TextBlock Text="Asumsi Perhitungan" FontSize="15" FontWeight="SemiBold"
+            <Border Grid.Column="2" Style="{StaticResource Card}" Padding="22">
+                <StackPanel>
+                    <TextBlock Text="Asumsi Perhitungan" FontSize="15" FontWeight="SemiBold"
                      Foreground="{StaticResource InkBrush}"/>
-          <TextBlock Text="Ditampilkan terbuka agar hasil dapat diperiksa ulang."
+                    <TextBlock Text="Ditampilkan terbuka agar hasil dapat diperiksa ulang."
                      FontSize="12" Foreground="{StaticResource MutedBrush}"
                      TextWrapping="Wrap" Margin="0,14,0,0"/>
-          <Border Background="{StaticResource SubtleBrush}" CornerRadius="8" Padding="14"
+                    <Border Background="{StaticResource SubtleBrush}" CornerRadius="8" Padding="14"
                   Margin="0,14,0,0">
-            <StackPanel>
-              <TextBlock Text="Energi tahunan =" FontSize="11" Foreground="{StaticResource MutedBrush}"/>
-              <TextBlock Text="kWp × PSH × PR × 365" FontSize="13" FontWeight="SemiBold"
+                        <StackPanel>
+                            <TextBlock Text="Energi tahunan =" FontSize="11" Foreground="{StaticResource MutedBrush}"/>
+                            <TextBlock Text="kWp × PSH × PR × 365" FontSize="13" FontWeight="SemiBold"
                          Foreground="{StaticResource InkBrush}" Margin="0,6,0,0"/>
-            </StackPanel>
-          </Border>
+                        </StackPanel>
+                    </Border>
 
-          <ItemsControl x:Name="Asumsi">
-            <ItemsControl.ItemTemplate>
-              <DataTemplate>
-                <StackPanel Margin="0,14,0,0">
-                  <DockPanel>
-                    <TextBlock DockPanel.Dock="Right" Text="{Binding Nilai}" FontSize="12"
+                    <ItemsControl x:Name="Asumsi">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Margin="0,14,0,0">
+                                    <DockPanel>
+                                        <TextBlock DockPanel.Dock="Right" Text="{Binding Nilai}" FontSize="12"
                                FontWeight="SemiBold" Foreground="{StaticResource AccentBrush}"
                                Margin="8,0,0,0"/>
-                    <TextBlock Text="{Binding Nama}" FontSize="12" FontWeight="Medium"
+                                        <TextBlock Text="{Binding Nama}" FontSize="12" FontWeight="Medium"
                                Foreground="{StaticResource InkBrush}"/>
-                  </DockPanel>
-                  <TextBlock Text="{Binding Keterangan}" FontSize="11" TextWrapping="Wrap"
+                                    </DockPanel>
+                                    <TextBlock Text="{Binding Keterangan}" FontSize="11" TextWrapping="Wrap"
                              Foreground="{StaticResource MutedBrush}" Margin="0,2,0,0"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
                 </StackPanel>
-              </DataTemplate>
-            </ItemsControl.ItemTemplate>
-          </ItemsControl>
+            </Border>
+        </Grid>
+        <ScrollViewer x:Name="PanelFinansial"
+              Grid.Row="2" Grid.RowSpan="2"
+              Margin="0,20,0,0" Visibility="Collapsed"
+              VerticalScrollBarVisibility="Auto">
+        <StackPanel>
+            <ItemsControl x:Name="KpiFinansial">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <UniformGrid Rows="1" Columns="4"/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Style="{StaticResource Card}" Padding="16" Margin="0,0,8,0">
+                            <StackPanel>
+                                <TextBlock Text="{Binding Nama}" TextWrapping="Wrap"
+                         Foreground="{StaticResource MutedBrush}"/>
+                                <TextBlock Text="{Binding Nilai}" TextWrapping="Wrap"
+                         FontSize="20" FontWeight="SemiBold" Margin="0,8,0,0"
+                         Foreground="{StaticResource InkBrush}"/>
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <Border Style="{StaticResource Card}" Padding="20" Margin="0,16,0,0">
+                <StackPanel>
+                    <TextBlock Text="Arus Kas Kumulatif 25 Tahun" FontWeight="SemiBold"/>
+                    <TextBlock Text="Proyeksi arus kas belum tersedia."
+                   Margin="0,8,0,0" Foreground="{StaticResource MutedBrush}"/>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}" Padding="20" Margin="0,16,0,0">
+                <StackPanel>
+                    <TextBlock Text="Dampak Lingkungan" FontWeight="SemiBold"/>
+                    <TextBlock x:Name="EmisiTahunan" Margin="0,8,0,0" TextWrapping="Wrap"/>
+                    <TextBlock x:Name="SetaraPohon" Margin="0,6,0,0" TextWrapping="Wrap"/>
+                </StackPanel>
+            </Border>
         </StackPanel>
-      </Border>
+    </ScrollViewer>
     </Grid>
-  </Grid>
 </UserControl>
