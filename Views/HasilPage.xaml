@@ -23,6 +23,12 @@
                 <TextBlock x:Name="PesanMemuat"
              Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap"/>
             </Border>
+            <Border x:Name="BannerCadangan" Visibility="Collapsed"
+        Background="{StaticResource AccentSoftBrush}"
+        CornerRadius="8" Padding="14,10" Margin="0,12,0,0">
+                <TextBlock Foreground="{StaticResource InkBrush}" TextWrapping="Wrap"
+             Text="Open-Meteo tidak dapat dihubungi. Angka di bawah memakai data cadangan rata-rata Indonesia (4,5 kWh/m²/hari) — kurang akurat untuk lokasi ini."/>
+            </Border>
         </StackPanel>
 
     <!-- Tabs -->

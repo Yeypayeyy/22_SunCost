@@ -60,6 +60,7 @@ public partial class HasilPage : UserControl
             new Bar(nama, 124, track, redup, FontWeights.Normal, "Memuat…")).ToArray();
 
         Asumsi.ItemsSource = null;
+        BannerCadangan.Visibility = Visibility.Collapsed;
     }
 
     private void AturSkeleton(bool memuat)
@@ -103,6 +104,7 @@ public partial class HasilPage : UserControl
             TampilkanBatang(skenario.ProduksiBulanan.ToArray());
         }
         TampilkanFinansial(skenario);
+        TampilkanBannerCadangan(dataCadangan);
     }
 
     private void TampilkanBatang(double[] produksi)
@@ -169,6 +171,28 @@ public partial class HasilPage : UserControl
             $"{emisi.ToString("#,##0", FormatId.Angka)} kg CO₂ dihindari per tahun";
         SetaraPohon.Text =
             $"Setara {pohon.ToString("#,##0", FormatId.Angka)} pohon";
+    }
+
+    private record AsumsiTampilan(string Nama, string Nilai, string Keterangan);
+
+    private void TampilkanBannerCadangan(bool dataCadangan)
+    {
+        BannerCadangan.Visibility = dataCadangan
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+
+        Asumsi.ItemsSource = dataCadangan
+            ? new[]
+            {
+            new AsumsiTampilan(
+                "Peak Sun Hours (PSH)",
+                "4,5 jam/hari",
+                "Cadangan rata-rata Indonesia — API tidak terjangkau")
+            }
+            : null;
+
+        if (dataCadangan)
+            Ringkasan.Text += " · data cadangan";
     }
 
     private static string Rupiah(double? nilai) =>
