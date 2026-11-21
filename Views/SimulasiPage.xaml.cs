@@ -191,11 +191,6 @@ public partial class SimulasiPage : UserControl
         Berubah();
     }
 
-    // ponytail: DataRadiasi belum mengekspos sumberData, jadi data cadangan dikenali dari isinya:
-    // DataCadangan() selalu 4,5 jam/hari di 12 bulan dan 27 °C. Ganti ke properti sumber data setelah BE-3.
-    private static bool Cadangan(DataRadiasi d) =>
-        d.SuhuRataRata == 27.0 && Enumerable.Range(1, 12).All(b => d.getPeakSunHours(b) == 4.5);
-
     // ---------------------------------------------------------------- estimasi langsung
 
     private void Berubah()
@@ -233,7 +228,7 @@ public partial class SimulasiPage : UserControl
         else
         {
             psh = radiasi.getRataRataTahunan().ToString("0.0", FormatId.Angka) + " jam/hari"
-                  + (Cadangan(radiasi) ? " · cadangan" : "");
+                  + (radiasi.AdalahCadangan ? " · cadangan" : "");
             var kalkulator = new KalkulatorEnergi(BuatLokasi(1), panel, radiasi);
             double faktor = kalkulator.hitungKoreksiSuhu(radiasi.SuhuRataRata, panel);
             double suhuSel = radiasi.SuhuRataRata + AsumsiTampilan.KenaikanSuhuSel;
