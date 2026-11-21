@@ -14,7 +14,7 @@ public class KalkulatorEnergi
 
     private double performanceRatio = 0.80;  // rugi inverter, kabel, kotoran, dan mismatch
 
-    // Objek yang dipakai perhitungan (relasi «uses» pada class diagram).
+    // Objek yang dipakai perhitungan (relasi "uses" pada class diagram).
     private readonly Lokasi lokasi;
     private readonly PanelSurya panel;
     private readonly DataRadiasi dataRadiasi;
@@ -46,13 +46,38 @@ public class KalkulatorEnergi
     public double hitungKoreksiSuhu(double suhu, PanelSurya panel) =>
         panel.hitungKoreksiSuhu(suhu + KenaikanSuhuSel);
 
-    /// <summary>Energi bulan ke-1..12 (kWh) = kWp x PSH bulan itu x jumlah hari x PR x koreksi suhu.</summary>
-    public double hitungProduksiBulanan(int bulan) =>
-        hitungKapasitasTerpasang(lokasi, panel)
-        * dataRadiasi.getPeakSunHours(bulan)
-        * HariPerBulan[bulan - 1]
-        * performanceRatio
-        * hitungKoreksiSuhu(dataRadiasi.SuhuRataRata, panel);
+    /// <summary>
+    /// Faktor pengali (0..1) akibat arah dan sudut atap dibanding posisi ideal.
+    /// Posisi ideal: menghadap ekuator (utara di belahan bumi selatan, selatan di utara)
+    /// dengan kemiringan sebesar lintang.
+    /// </summary>
+    public double hitungFaktorOrientasi(Lokasi lokasi)
+    {
+        double azIdeal = lokasi.Latitude < 0 ? 0 : 180;
+        double tiltIdeal = Math.Max(Math.Abs(lokasi.Latitude), 5);
+
+        double t1 = tiltIdeal * Math.PI / 180;
+        double t2 = lokasi.Kemiringan * Math.PI / 180;
+        double dAz = (lokasi.Orientasi - azIdeal) * Math.PI / 180;
+
+        double cosSudut = Math.Cos(t1) * Math.Cos(t2)
+                        + Math.Sin(t1) * Math.Sin(t2) * Math.Cos(dAz);
+        return Math.Clamp(cosSudut, 0, 1);
+    }
+
+    /// <summary>Energi bulan ke-1..12 (kWh) = kWp x PSH x hari x PR x koreksi suhu x faktor orientasi.</summary>
+    public double hitungProduksiBulanan(int bulan)
+    {
+        if (bulan < 1 || bulan > 12)
+            throw new ArgumentOutOfRangeException(nameof(bulan), "Bulan harus 1 sampai 12.");
+
+        return hitungKapasitasTerpasang(lokasi, panel)
+            * dataRadiasi.getPeakSunHours(bulan)
+            * HariPerBulan[bulan - 1]
+            * performanceRatio
+            * hitungKoreksiSuhu(dataRadiasi.SuhuRataRata, panel)
+            * hitungFaktorOrientasi(lokasi);
+    }
 
     public double hitungProduksiTahunan() => Enumerable.Range(1, 12).Sum(hitungProduksiBulanan);
 }

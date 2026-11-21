@@ -28,6 +28,11 @@ public class DataRadiasi
     /// <summary>Dibaca KalkulatorEnergi untuk koreksi suhu.</summary>
     public double SuhuRataRata => suhuRataRata;
 
+    public string SumberData => sumberData;
+
+/// <summary>True kalau angka berasal dari nilai cadangan, bukan data lokasi pengguna.</summary>
+public bool AdalahCadangan => sumberData.StartsWith("Cadangan", StringComparison.Ordinal);
+
     /// <summary>Peak Sun Hours untuk bulan 1 (Januari) sampai 12 (Desember).</summary>
     public double getPeakSunHours(int bulan)
     {

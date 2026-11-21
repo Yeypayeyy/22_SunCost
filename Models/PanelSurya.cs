@@ -47,6 +47,7 @@ public abstract class PanelSurya
     /// Faktor pengali daya akibat panas sel: 1,0 pada suhu referensi, turun linear sebesar
     /// koefisien suhu per derajat. Panel kristalin memakai rumus ini; teknologi lain menimpanya.
     /// </summary>
+    // Math.Abs: datasheet biasa menulis -0,35; tanda diabaikan agar produksi tidak malah naik.
     public virtual double hitungKoreksiSuhu(double suhuSel) =>
-        Math.Max(0.3, 1 - Math.Max(0, suhuSel - SuhuReferensi) * koefisienSuhu / 100);
+        Math.Max(0.3, 1 - Math.Max(0, suhuSel - SuhuReferensi) * Math.Abs(koefisienSuhu) / 100);
 }

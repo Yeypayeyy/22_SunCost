@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using SunCost.Services;
 
 namespace SunCost.Models;
@@ -13,6 +15,13 @@ public class SimulasiSkenario
     private double penghematanTahunan;   // rupiah per tahun
     private double paybackPeriod;        // tahun
     private double emisiDihindari;       // kg CO2 per tahun
+
+    // Rincian hasil. Kosong/null untuk skenario yang dimuat dari riwayat, karena database belum menyimpannya.
+    private double[] produksiBulanan = Array.Empty<double>();   // kWh, indeks 0 = Januari
+    private double? kapasitasKwp;
+    private int? jumlahPanel;
+    private double? biayaInstalasi;       // rupiah
+    private double? keuntungan25Tahun;    // rupiah
 
     // Asosiasi 1-1 pada class diagram. Bernilai null untuk skenario yang dimuat dari riwayat,
     // karena database hanya menyimpan hasil perhitungannya.
@@ -49,7 +58,7 @@ public class SimulasiSkenario
         this.emisiDihindari = emisiDihindari;
     }
 
-    // Akses baca untuk RepositoriSimulasi dan RiwayatSimulasi.
+    // Akses baca untuk RepositoriSimulasi, RiwayatSimulasi, dan halaman Hasil.
     public string Id => id;
     public string Nama => nama;
     public DateTime Tanggal => tanggal;
@@ -57,6 +66,13 @@ public class SimulasiSkenario
     public double PenghematanTahunan => penghematanTahunan;
     public double PaybackPeriod => paybackPeriod;
     public double EmisiDihindari => emisiDihindari;
+
+    /// <summary>Produksi 12 bulan (kWh); kosong kalau skenario dari riwayat.</summary>
+    public IReadOnlyList<double> ProduksiBulanan => produksiBulanan;
+    public double? KapasitasKwp => kapasitasKwp;
+    public int? JumlahPanel => jumlahPanel;
+    public double? BiayaInstalasi => biayaInstalasi;
+    public double? Keuntungan25Tahun => keuntungan25Tahun;
 
     public void jalankanSimulasi()
     {
@@ -68,12 +84,15 @@ public class SimulasiSkenario
         var kalkulator = new KalkulatorEnergi(lokasi, panel, dataRadiasi);
         var dampak = new DampakLingkungan();
 
-        double kapasitasKwp = kalkulator.hitungKapasitasTerpasang(lokasi, panel);
+        kapasitasKwp = kalkulator.hitungKapasitasTerpasang(lokasi, panel);
+        jumlahPanel = panel.hitungJumlahPanel(lokasi.hitungLuasEfektif());
+        produksiBulanan = Enumerable.Range(1, 12).Select(kalkulator.hitungProduksiBulanan).ToArray();
         produksiTahunan = kalkulator.hitungProduksiTahunan();
 
-        analisis.hitungBiayaInstalasi(kapasitasKwp * 1000);
+        biayaInstalasi = analisis.hitungBiayaInstalasi(kapasitasKwp.Value * 1000);
         penghematanTahunan = analisis.hitungPenghematanBulanan(produksiTahunan / 12, tarif) * 12;
         paybackPeriod = analisis.hitungPaybackPeriod();
+        keuntungan25Tahun = analisis.proyeksiKeuntungan25Tahun();
         emisiDihindari = dampak.hitungEmisiDihindari(produksiTahunan);
     }
 

@@ -32,6 +32,22 @@ public static class SelfCheck
         // Udara 27 C -> sel 52 C -> rugi (52 - 25) x 0,4% = 10,8%.
         Debug.Assert(Math.Abs(kalkulator.hitungKoreksiSuhu(27, panel) - 0.892) < 1e-9, "koreksi suhu meleset");
 
+        // Koefisien dari datasheet sering negatif; hasilnya harus sama.
+        var panelNegatif = new PanelMonokristal("Negatif", 550, 21.3, koefisienSuhu: -0.4, luasPerPanel: 2.6, hargaPerUnit: 2_750_000);
+        Debug.Assert(Math.Abs(kalkulator.hitungKoreksiSuhu(27, panelNegatif) - 0.892) < 1e-9, "koefisien negatif harus diperlakukan sama");
+
+        // Orientasi: di belahan selatan, atap menghadap utara harus lebih baik daripada menghadap selatan.
+        var atapUtara = new Lokasi("U", -7.72, 110.36, 40, orientasi: 0, kemiringan: 15);
+        var atapSelatan = new Lokasi("S", -7.72, 110.36, 40, orientasi: 180, kemiringan: 15);
+        var atapIdeal = new Lokasi("I", -7.72, 110.36, 40, orientasi: 0, kemiringan: 7.72);
+        Debug.Assert(kalkulator.hitungFaktorOrientasi(atapUtara) > kalkulator.hitungFaktorOrientasi(atapSelatan), "utara harus lebih baik dari selatan");
+        Debug.Assert(Math.Abs(kalkulator.hitungFaktorOrientasi(atapIdeal) - 1.0) < 1e-9, "posisi ideal harus bernilai 1");
+
+        // Bulan di luar 1..12 harus ditolak.
+        bool ditolak = false;
+        try { kalkulator.hitungProduksiBulanan(13); } catch (ArgumentOutOfRangeException) { ditolak = true; }
+        Debug.Assert(ditolak, "bulan 13 mestinya ditolak");
+
         CekPolimorfismePanel(kalkulator, panel);
 
         // Produksi wajar untuk PLTS di Indonesia: 1.100-1.600 kWh per kWp per tahun.
@@ -61,6 +77,13 @@ public static class SelfCheck
         skenario.jalankanSimulasi();
         Debug.Assert(Math.Abs(skenario.PaybackPeriod - payback) < 1e-9, "payback skenario beda dengan analisis langsung");
         Debug.Assert(skenario.getRingkasan().StartsWith("Rumah Sleman:"), "ringkasan tidak memuat nama");
+
+        Debug.Assert(skenario.ProduksiBulanan.Count == 12, "skenario harus menyimpan 12 nilai bulanan");
+Debug.Assert(Math.Abs(skenario.ProduksiBulanan.Sum() - skenario.ProduksiTahunan) < 1e-6, "jumlah bulanan harus sama dengan produksi tahunan");
+Debug.Assert(skenario.KapasitasKwp is { } kapasitasSkenario && Math.Abs(kapasitasSkenario - 6.05) < 1e-9, "kapasitas skenario meleset");
+Debug.Assert(skenario.JumlahPanel == 11, "jumlah panel skenario meleset");
+Debug.Assert(skenario.BiayaInstalasi is { } biayaSkenario && Math.Abs(biayaSkenario - 6050 * 15_000) < 1e-6, "biaya instalasi skenario meleset (cek satuan Wp/kWp)");
+Debug.Assert(skenario.Keuntungan25Tahun > 0, "keuntungan 25 tahun mestinya positif");
 
         CekPenyimpanan(skenario);
         CekTampilanRiwayat();
@@ -132,6 +155,10 @@ public static class SelfCheck
             Debug.Assert(double.IsPositiveInfinity(dimuat[1].PaybackPeriod), "payback tak hingga hilang di database");
             Debug.Assert(riwayat.bandingkanSkenario(dimuat[1], dimuat[0]).StartsWith("Rumah Sleman balik modal lebih cepat"),
                 "perbandingan salah memilih skenario");
+
+                var rugi2 = new SimulasiSkenario("rugi2", "Sama-sama rugi", DateTime.Now, 1, 1, double.PositiveInfinity, 1);
+Debug.Assert(riwayat.bandingkanSkenario(dimuat[1], rugi2).Contains("sama-sama tidak balik modal"),
+    "dua skenario tanpa balik modal harus dilaporkan sama-sama rugi");
 
             var repo = new RepositoriSimulasi(berkas);
             Debug.Assert(repo.ambilById(s.Id)?.Nama == "Rumah Sleman", "ambilById tidak menemukan skenario");
