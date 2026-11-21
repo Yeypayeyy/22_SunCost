@@ -62,8 +62,9 @@
       </DockPanel>
       <TextBlock x:Name="Status" FontSize="12" Foreground="{StaticResource MutedBrush}"
                  Margin="0,12,0,0" TextWrapping="Wrap"/>
-      <Border Style="{StaticResource Card}" Margin="0,16,0,0" ClipToBounds="True">
-        <DataGrid x:Name="Tabel" AutoGenerateColumns="False" CanUserAddRows="False"
+                <Border x:Name="KartuTabel" Style="{StaticResource Card}"
+        Margin="0,16,0,0" ClipToBounds="True">
+                    <DataGrid x:Name="Tabel" AutoGenerateColumns="False" CanUserAddRows="False"
                   CanUserDeleteRows="False" CanUserReorderColumns="False" CanUserSortColumns="False"
                   HeadersVisibility="Column" RowHeaderWidth="0" GridLinesVisibility="Horizontal"
                   HorizontalGridLinesBrush="{StaticResource BorderBrush}" BorderThickness="0"
@@ -126,7 +127,6 @@
                         <Button Width="34" Height="30"
                                 Background="Transparent" BorderThickness="0"
                                 Foreground="{StaticResource DangerBrush}"
-                                IsEnabled="{Binding BisaDihapus}"
                                 Click="MintaHapus_Click"
                                 ToolTip="Hapus skenario"
                                 AutomationProperties.Name="Hapus skenario">
@@ -138,7 +138,30 @@
           </DataGrid.Columns>
         </DataGrid>
       </Border>
-      <TextBlock x:Name="Petunjuk" Text="Pilih 2–3 skenario, lalu klik Bandingkan."
+                <Border x:Name="KartuKosong" Style="{StaticResource Card}"
+        Visibility="Collapsed" Margin="0,16,0,0" Padding="24,44">
+                    <StackPanel HorizontalAlignment="Center">
+                        <Border Width="56" Height="56" CornerRadius="28"
+            HorizontalAlignment="Center"
+            Background="{StaticResource AccentSoftBrush}">
+                            <TextBlock Text="☀" FontSize="25"
+                 HorizontalAlignment="Center" VerticalAlignment="Center"
+                 Foreground="{StaticResource AccentBrush}"/>
+                        </Border>
+
+                        <TextBlock Text="Belum ada simulasi tersimpan"
+               HorizontalAlignment="Center" FontSize="17" FontWeight="SemiBold"
+               Margin="0,14,0,0" Foreground="{StaticResource InkBrush}"/>
+                        <TextBlock Text="Buat simulasi untuk melihat dan membandingkan hasilnya di sini."
+               TextAlignment="Center" TextWrapping="Wrap" Margin="0,6,0,16"
+               Foreground="{StaticResource MutedBrush}"/>
+
+                        <Button Content="Mulai Simulasi" HorizontalAlignment="Center"
+            Style="{StaticResource PrimaryButton}" Padding="18,10"
+            Click="MulaiSimulasi_Click"/>
+                    </StackPanel>
+                </Border>
+                <TextBlock x:Name="Petunjuk" Text="Pilih 2–3 skenario, lalu klik Bandingkan."
                  FontSize="12" Foreground="{StaticResource MutedBrush}" Margin="0,12,0,0"/>
       <StackPanel x:Name="BagianPerbandingan" Visibility="Collapsed">
         <TextBlock Text="Perbandingan Skenario" FontSize="16" FontWeight="SemiBold"
