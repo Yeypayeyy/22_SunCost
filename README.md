@@ -51,9 +51,16 @@ bergantung pada estimasi vendor yang cenderung optimistis dan tidak transparan.
 Energi tahunan = kWp × Peak Sun Hours × Performance Ratio × 365
 ```
 
-Dengan koreksi penurunan efisiensi akibat suhu sekitar **0,4% per °C di atas 25°C** — faktor
-yang signifikan di iklim tropis.
+Koreksi efisiensi akibat suhu: 0,4% per °C di atas 25°C pada suhu sel panel. Suhu sel diperkirakan sebagai suhu udara rata-rata + 25°C (pendekatan NOCT), sehingga estimasi cenderung konservatif.
 
+### Asumsi
+
+- Performance Ratio 0,80 (rugi inverter, kabel, kotoran, mismatch)
+- Degradasi panel 0,5% per tahun, umur sistem 25 tahun
+- Tarif listrik PLN dianggap tetap, tanpa diskonto, tanpa biaya ganti inverter
+- Radiasi pada bidang miring didekati dengan koreksi geometris terhadap posisi ideal
+  (menghadap ekuator, kemiringan sebesar lintang). Pendekatan ini sederhana dan konservatif.
+  
 ### Analisis Kompetitor
 
 | Aplikasi | Kelebihan | Keterbatasan |

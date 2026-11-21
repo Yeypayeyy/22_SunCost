@@ -39,4 +39,11 @@ public class Lokasi
         longitude.ToString("0.####", CultureInfo.InvariantCulture);
 
     public double hitungLuasEfektif() => luasAtap * FaktorPemanfaatan;
+
+
+    public double Latitude => latitude;
+    public double Orientasi => orientasi;
+    public double Kemiringan => kemiringan;
+
 }
+
