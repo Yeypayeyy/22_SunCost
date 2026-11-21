@@ -3,7 +3,7 @@
 Pemilik: **Sri Wahyuni Arista**
 
 Lingkup: `Models/`, `Services/`, skema database. Tidak menyentuh `Views/`, `App.xaml`,
-atau `MainWindow.*` — itu milik jalur frontend, lihat [implementasi-fe.md](implementasi-fe.md).
+atau `MainWindow.*`: itu milik jalur frontend, lihat [implementasi-fe.md](implementasi-fe.md).
 
 Keadaan sekarang: mesin perhitungan sudah lengkap dan terbukti lewat `SelfCheck.cs`, tetapi
 database hanya menyimpan hasil akhir dan layanan cuaca tidak pernah dipanggil dari alur
@@ -14,7 +14,7 @@ pengguna mana pun.
 Berkas: `Services/RepositoriSimulasi.cs`
 
 Tabel `skenario` sekarang hanya punya tujuh kolom hasil. DDL lengkap untuk enam tabel
-**sudah ditulis** di [docs/ERD.md](../ERD.md) bagian "DDL (SQLite)" — tinggal dieksekusi:
+**sudah ditulis** di [docs/ERD.md](../ERD.md) bagian "DDL (SQLite)", tinggal dieksekusi:
 `lokasi`, `panel_surya`, `tarif_listrik_pln`, `data_radiasi`, `radiasi_bulanan`, `skenario`.
 
 Dua hal yang mudah terlewat:
@@ -32,7 +32,7 @@ dan riwayat lama masih tampil.
 
 Berkas: `Services/RepositoriSimulasi.cs`, `Models/SimulasiSkenario.cs`
 
-Inilah penyebab kolom Luas atap, Kapasitas, dan Untung 25 tahun menampilkan `—` di halaman
+Inilah penyebab kolom Luas atap, Kapasitas, dan Untung 25 tahun menampilkan `-` di halaman
 Riwayat: datanya memang tidak pernah disimpan.
 
 Tambahkan penyimpanan untuk `Lokasi`, `PanelSurya`, `TarifListrikPLN`, dan `DataRadiasi`,
@@ -43,10 +43,26 @@ Setelah ini, konstruktor "skenario dari riwayat" di `SimulasiSkenario` yang memb
 asosiasi bernilai `null` sebaiknya dihapus, berikut pengecualian
 `"Skenario dari riwayat tidak dapat dihitung ulang."`.
 
+**Dua tambahan pada `SimulasiSkenario` yang dibutuhkan B1**: tanpa ini `HasilPage` tidak bisa
+menghitung produksi bulanan dari skenario yang diterimanya:
+
+```csharp
+// asosiasi sekarang private tanpa getter; HasilPage butuh untuk KalkulatorEnergi
+public Lokasi Lokasi { get; }
+public PanelSurya Panel { get; }
+public DataRadiasi DataRadiasi { get; }
+public TarifListrikPLN Tarif { get; }
+
+// isian "Tagihan listrik bulanan" di form belum punya tempat; dipakai KPI "Setara konsumsi"
+public double? TagihanBulananKwh { get; init; }
+```
+
+Simpan juga `TagihanBulananKwh` di database (kolom nullable pada `skenario`).
+
 Catatan performa: `ambilById()` sekarang memindai seluruh riwayat
 (`ambilSemua().Find(...)`). Sekalian ganti menjadi query `WHERE id = $id`.
 
-**Selesai bila:** halaman Riwayat tidak lagi menampilkan `—`, dan
+**Selesai bila:** halaman Riwayat tidak lagi menampilkan `-`, dan
 `RiwayatSimulasi.bandingkanSkenario()` bekerja pada dua skenario yang dimuat dari database.
 
 ## BE-3 · Layanan cuaca menjadi asinkron
@@ -54,7 +70,7 @@ Catatan performa: `ambilById()` sekarang memindai seluruh riwayat
 Berkas: `Services/LayananCuacaAPI.cs`
 
 ```csharp
-// sekarang — memblokir thread pemanggil sampai 20 detik
+// sekarang: memblokir thread pemanggil sampai 20 detik
 string json = httpClient.GetStringAsync(url).GetAwaiter().GetResult();
 
 // menjadi
@@ -62,7 +78,7 @@ public async Task<DataRadiasi> ambilDataRadiasiAsync(Lokasi lokasi)
 ```
 
 Dipanggil dari tombol Hitung, bentuk sekarang membekukan jendela selama pengambilan data.
-Komentar di kode menyebut "tidak kembali ke thread UI" — itu tidak berlaku lagi begitu
+Komentar di kode menyebut "tidak kembali ke thread UI", itu tidak berlaku lagi begitu
 `SimulasiPage` memanggilnya.
 
 `HttpClient` juga dibuat baru pada setiap instance. Jadikan `static readonly` supaya tidak
@@ -70,7 +86,7 @@ menghabiskan socket.
 
 Kembalikan juga penanda apakah hasil berasal dari API atau dari `DataCadangan()`, karena
 frontend wajib menampilkannya (lihat B4). Nilai `DataRadiasi.sumberData` sudah membedakan
-keduanya — cukup ekspos sebagai properti publik.
+keduanya, cukup ekspos sebagai properti publik.
 
 **Selesai bila:** jendela tetap bisa digerakkan selama pengambilan data berlangsung.
 
@@ -94,9 +110,9 @@ Berkas: `Services/RepositoriSimulasi.cs`
 Dropdown "Jenis panel" dan "Golongan tarif PLN" pada halaman Simulasi Baru membutuhkan isi.
 Sisipkan data awal saat database pertama kali dibuat:
 
-- `panel_surya` — tiga sampai empat panel yang beredar di pasar, sertakan minimal satu
+- `panel_surya`: tiga sampai empat panel yang beredar di pasar, sertakan minimal satu
   monokristalin dan satu thin film supaya kedua rumus koreksi suhu dapat dicoba pengguna.
-- `tarif_listrik_pln` — golongan R-1/900 VA, R-1/1300 VA, R-1/2200 VA, dan R-2.
+- `tarif_listrik_pln`: golongan R-1/900 VA, R-1/1300 VA, R-1/2200 VA, dan R-2.
 
 Gunakan `INSERT OR IGNORE` dengan id tetap supaya tidak menggandakan baris setiap kali
 aplikasi dibuka.
@@ -109,7 +125,7 @@ Berkas: `docs/specs/pengujian.md` *(baru)*
 
 `Services/SelfCheck.cs` sudah memuat sekitar tiga puluh pernyataan uji yang menutup validasi
 lokasi, jumlah panel, kapasitas, koreksi suhu, polimorfisme panel, kewajaran produksi,
-perhitungan payback, emisi, dan penyimpanan. Itu bahan mentahnya — tinggal diangkat menjadi
+perhitungan payback, emisi, dan penyimpanan. Itu bahan mentahnya, tinggal diangkat menjadi
 tabel kasus uji berisi ID, skenario, input, hasil diharapkan, hasil aktual, dan status.
 
 > Berkas Modul 10 belum ada di repositori ini, jadi **format tabelnya harus disamakan sendiri**
@@ -121,18 +137,18 @@ tabel kasus uji berisi ID, skenario, input, hasil diharapkan, hasil aktual, dan 
 
 Berkas: `Services/AnalisisFinansial.cs`, `Services/DampakLingkungan.cs`
 
-Desain frame `4 · Hasil — Finansial` meminta data yang belum ada method-nya. Frontend tidak
+Desain frame `4 · Hasil (Finansial)` meminta data yang belum ada method-nya. Frontend tidak
 boleh menghitungnya sendiri di view.
 
 ```csharp
-// AnalisisFinansial — 26 nilai (tahun 0..25) untuk grafik arus kas kumulatif.
+// AnalisisFinansial: 26 nilai (tahun 0..25) untuk grafik arus kas kumulatif.
 // Tahun 0 bernilai negatif sebesar biaya instalasi; titik potong nol = periode balik modal.
 public List<double> proyeksiArusKas()
 
-// DampakLingkungan — emisi (kg CO2) menjadi kilometer mobil bensin yang tidak ditempuh.
+// DampakLingkungan: emisi (kg CO2) menjadi kilometer mobil bensin yang tidak ditempuh.
 public double setaraKilometerMobil(double emisi)
 
-// DampakLingkungan — total CO2 selama 25 tahun, ikut memperhitungkan degradasi panel.
+// DampakLingkungan: total CO2 selama 25 tahun, ikut memperhitungkan degradasi panel.
 public double totalEmisi25Tahun(double produksiTahunan, double degradasiTahunan)
 ```
 
@@ -168,7 +184,7 @@ frontend membacanya alih-alih menyalin angkanya:
 | `Models/Lokasi.cs` | `FaktorPemanfaatan` |
 | `Models/PanelSurya.cs` | `SuhuReferensi` |
 
-Dua `Debug.Assert` di `SelfCheck.cs` akan gagal setelah perubahan angka — pemeriksaan
+Dua `Debug.Assert` di `SelfCheck.cs` akan gagal setelah perubahan angka, pemeriksaan
 kewajaran produksi per kWp dan pemeriksaan emisi yang membandingkan dengan `0.794`.
 Perbarui keduanya.
 

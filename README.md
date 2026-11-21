@@ -18,14 +18,14 @@ Kelompok SunCost
 Rencana kerja, spesifikasi layar, dan catatan keputusan ada di [docs/](docs/README.md):
 
 - [Peta layar UI dan token desain](docs/specs/layar-ui.md)
-- [Rencana implementasi frontend](docs/plans/implementasi-fe.md) — jalur FE-A dan FE-B
-- [Rencana implementasi backend](docs/plans/implementasi-be.md) — BE-1 sampai BE-8
-- [ADR 0001 — asumsi perhitungan](docs/decisions/0001-asumsi-perhitungan.md)
+- [Rencana implementasi frontend](docs/plans/implementasi-fe.md): jalur FE-A dan FE-B
+- [Rencana implementasi backend](docs/plans/implementasi-be.md): BE-1 sampai BE-8
+- [ADR 0001: asumsi perhitungan](docs/decisions/0001-asumsi-perhitungan.md)
 - [ERD basis data](docs/ERD.md)
 
 ## Detail Aplikasi
 
-- **Kategori:** Climate Action — energi terbarukan / kalkulator kelayakan investasi
+- **Kategori:** Climate Action, energi terbarukan / kalkulator kelayakan investasi
 - **Tipe aplikasi:** Aplikasi desktop Windows berbasis **C# (WPF)** dengan basis data lokal dan integrasi API cuaca
 
 ### Peran Anggota
@@ -47,12 +47,12 @@ bergantung pada estimasi vendor yang cenderung optimistis dan tidak transparan.
 
 ### Fitur
 
-1. **Kalkulator potensi energi** — input lokasi, luas atap, orientasi dan kemiringan atap;
+1. **Kalkulator potensi energi**: input lokasi, luas atap, orientasi dan kemiringan atap;
    menghitung kapasitas terpasang (kWp) serta estimasi produksi energi bulanan dan tahunan.
-2. **Analisis finansial (ROI)** — estimasi biaya instalasi, penghematan bulanan, periode balik
+2. **Analisis finansial (ROI)**: estimasi biaya instalasi, penghematan bulanan, periode balik
    modal, dan proyeksi keuntungan bersih selama 25 tahun.
-3. **Dampak lingkungan** — konversi produksi energi menjadi emisi CO₂ yang dihindari.
-4. **Riwayat simulasi** — penyimpanan lokal untuk membandingkan beberapa skenario kapasitas
+3. **Dampak lingkungan**: konversi produksi energi menjadi emisi CO₂ yang dihindari.
+4. **Riwayat simulasi**: penyimpanan lokal untuk membandingkan beberapa skenario kapasitas
    atau posisi atap.
 
 ### Metode Perhitungan
@@ -61,7 +61,7 @@ bergantung pada estimasi vendor yang cenderung optimistis dan tidak transparan.
 Energi tahunan = kWp × Peak Sun Hours × Performance Ratio × 365
 ```
 
-Dengan koreksi penurunan efisiensi akibat suhu sekitar **0,4% per °C di atas 25°C** — faktor
+Dengan koreksi penurunan efisiensi akibat suhu sekitar **0,4% per °C di atas 25°C**: faktor
 yang signifikan di iklim tropis.
 
 ### Analisis Kompetitor
