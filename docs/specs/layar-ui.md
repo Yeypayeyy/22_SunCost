@@ -12,23 +12,23 @@ Lebar sidebar 240, area konten 1040, padding konten 36 atas/bawah dan 40 kiri/ka
 |---|---|---|---|
 | 1 | `1 · Beranda` | [BerandaPage.xaml](../../Views/BerandaPage.xaml) | ada, data contoh |
 | 2 | `2 · Input Simulasi` | `Views/SimulasiPage.xaml` | **belum ada** |
-| 3 | `3 · Hasil — Energi` | [HasilPage.xaml](../../Views/HasilPage.xaml) | ada, data contoh |
-| 4 | `4 · Hasil — Finansial` | tab kedua `HasilPage` | **belum ada** (MessageBox) |
+| 3 | `3 · Hasil (Energi)` | [HasilPage.xaml](../../Views/HasilPage.xaml) | ada, data contoh |
+| 4 | `4 · Hasil (Finansial)` | tab kedua `HasilPage` | **belum ada** (MessageBox) |
 | 5 | `5 · Riwayat Simulasi` | [RiwayatPage.xaml](../../Views/RiwayatPage.xaml) | ada |
 | 6 | `6 · Tentang` | `Views/TentangPage.xaml` | **belum ada** |
-| 7 | `7 · Input — validasi error` | state `SimulasiPage` | **belum ada** |
-| 8 | `8 · Input — tarif manual` | state `SimulasiPage` | **belum ada** |
-| 9 | `9 · Hasil — memuat data` | state `HasilPage` | **belum ada** |
-| 10 | `10 · Hasil — data cadangan` | state `HasilPage` | **belum ada** |
-| 11 | `11 · Riwayat — kosong` | state `RiwayatPage` | sebagian (teks saja) |
-| 12 | `12 · Riwayat — konfirmasi hapus` | state `RiwayatPage` | **belum ada** |
+| 7 | `7 · Input (validasi error)` | state `SimulasiPage` | **belum ada** |
+| 8 | `8 · Input (tarif manual)` | state `SimulasiPage` | **belum ada** |
+| 9 | `9 · Hasil (memuat data)` | state `HasilPage` | **belum ada** |
+| 10 | `10 · Hasil (data cadangan)` | state `HasilPage` | **belum ada** |
+| 11 | `11 · Riwayat (kosong)` | state `RiwayatPage` | sebagian (teks saja) |
+| 12 | `12 · Riwayat (konfirmasi hapus)` | state `RiwayatPage` | **belum ada** |
 
 Indeks navigasi di [MainWindow.xaml.cs](../../MainWindow.xaml.cs): `0` Beranda, `1` Simulasi Baru,
 `2` Riwayat, `3` Tentang.
 
 ## Token desain
 
-File Figma tidak memakai variable/style — semua nilai hardcoded. Daftar di bawah adalah hasil
+File Figma tidak memakai variable/style, semua nilai hardcoded. Daftar di bawah adalah hasil
 pembacaan frame yang ada, dipetakan ke resource di [App.xaml](../../App.xaml).
 
 ### Warna
@@ -55,7 +55,7 @@ Dua warna **baru** yang dipakai frame 7 dan 12 dan belum ada di `App.xaml`:
 <SolidColorBrush x:Key="DangerSoftBrush" Color="#F9EAE7"/>
 ```
 
-Skeleton memakai `TrackBrush` yang sudah ada — tidak perlu brush baru.
+Skeleton memakai `TrackBrush` yang sudah ada, tidak perlu brush baru.
 
 ### Tipografi
 
@@ -95,12 +95,12 @@ perhitungan membutuhkannya tetapi desain awal tidak menyediakan tempatnya.
 
 | Isian | Tipe | Contoh | Dipakai oleh |
 |---|---|---|---|
-| Nama skenario | teks | `Rumah Sleman — atap utara` | `SimulasiSkenario.nama` |
+| Nama skenario | teks | `Rumah Sleman, atap utara` | `SimulasiSkenario.nama` |
 | Lokasi | dropdown + koordinat | `Sleman, DIY` / `-7,7326° 110,3800°` | `Lokasi`, `LayananCuacaAPI` |
 | Luas atap tersedia | angka, m² | `32` | `Lokasi.luasAtap` |
 | Orientasi atap | dropdown | `Utara` | `Lokasi.orientasi` |
 | Kemiringan atap | slider 0–45° | `15°` | `Lokasi.kemiringan` |
-| Jenis panel | dropdown | `Monokristalin — 420 Wp` | `PanelMonokristal` / `PanelThinFilm` |
+| Jenis panel | dropdown | `Monokristalin 420 Wp` | `PanelMonokristal` / `PanelThinFilm` |
 | Biaya per Wp terpasang | angka, Rp/Wp | `21.000` | `AnalisisFinansial.biayaPerWp` |
 | Tagihan listrik bulanan | angka, kWh | `594` | KPI "Setara konsumsi" |
 | Golongan tarif PLN | dropdown + checkbox | `R-1 / 1300 VA` | `TarifListrikPLN` |
@@ -112,14 +112,14 @@ isian `Tarif per kWh`.
 
 | State | Pemicu | Tampilan |
 |---|---|---|
-| Validasi error | `Lokasi.validasi()` gagal atau isian wajib kosong | banner jumlah error di atas form, border `DangerBrush` pada isian bermasalah, pesan 11px di bawahnya, tombol Hitung nonaktif, panel estimasi jadi `—` |
+| Validasi error | `Lokasi.validasi()` gagal atau isian wajib kosong | banner jumlah error di atas form, border `DangerBrush` pada isian bermasalah, pesan 11px di bawahnya, tombol Hitung nonaktif, panel estimasi jadi `-` |
 | Memuat | pengambilan data Open-Meteo berjalan | skeleton `TrackBrush` menggantikan angka KPI, batang grafik, dan nilai asumsi; banner "Mengambil data radiasi… 5–20 detik" |
 | Data cadangan | `LayananCuacaAPI` mengembalikan `DataCadangan()` | banner peringatan `AccentSoftBrush`, PSH `4,5 jam/hari`, sumber data ditandai "Cadangan rata-rata Indonesia" dengan warna `AccentBrush` |
 | Riwayat kosong | `muatRiwayat()` mengembalikan daftar kosong | kartu empty state dengan ikon, ajakan, tombol "Mulai Simulasi"; tombol Bandingkan nonaktif `Bandingkan (0)` |
 | Konfirmasi hapus | klik ikon hapus pada satu baris | overlay hitam 38%, dialog 420px, tombol `Batal` (garis) dan `Hapus` (`DangerBrush`) |
 
 State **data cadangan wajib terlihat**. `LayananCuacaAPI.ambilDataRadiasi()` saat ini diam-diam
-mengembalikan rata-rata nasional ketika API gagal — tanpa banner ini pengguna menerima angka
+mengembalikan rata-rata nasional ketika API gagal, tanpa banner ini pengguna menerima angka
 yang salah tanpa tahu.
 
 ## Yang belum didesain

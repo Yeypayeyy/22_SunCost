@@ -16,7 +16,7 @@ public static class SelfCheck
     public static void Jalankan()
     {
         var lokasi = new Lokasi("Sleman", -7.72, 110.36, luasAtap: 40, orientasi: 0, kemiringan: 15);
-        var panel = new PanelSurya("Contoh 550", 550, 21.3, koefisienSuhu: 0.4, luasPerPanel: 2.6, hargaPerUnit: 2_750_000);
+        PanelSurya panel = new PanelMonokristal("Contoh 550", 550, 21.3, koefisienSuhu: 0.4, luasPerPanel: 2.6, hargaPerUnit: 2_750_000);
         var radiasi = new DataRadiasi(Enumerable.Repeat(4.5, 12).ToList(), 27, "uji", DateTime.Now);
         var tarif = new TarifListrikPLN("R-1/TR 1.300 VA", 1444.70, new DateTime(2025, 1, 1));
 
@@ -33,20 +33,22 @@ public static class SelfCheck
         Debug.Assert(Math.Abs(kalkulator.hitungKoreksiSuhu(27, panel) - 0.892) < 1e-9, "koreksi suhu meleset");
 
         // Koefisien dari datasheet sering negatif; hasilnya harus sama.
-var panelNegatif = new PanelSurya("Negatif", 550, 21.3, koefisienSuhu: -0.4, luasPerPanel: 2.6, hargaPerUnit: 2_750_000);
-Debug.Assert(Math.Abs(kalkulator.hitungKoreksiSuhu(27, panelNegatif) - 0.892) < 1e-9, "koefisien negatif harus diperlakukan sama");
+        var panelNegatif = new PanelMonokristal("Negatif", 550, 21.3, koefisienSuhu: -0.4, luasPerPanel: 2.6, hargaPerUnit: 2_750_000);
+        Debug.Assert(Math.Abs(kalkulator.hitungKoreksiSuhu(27, panelNegatif) - 0.892) < 1e-9, "koefisien negatif harus diperlakukan sama");
 
-// Orientasi: di belahan selatan, atap menghadap utara harus lebih baik daripada menghadap selatan.
-var atapUtara = new Lokasi("U", -7.72, 110.36, 40, orientasi: 0, kemiringan: 15);
-var atapSelatan = new Lokasi("S", -7.72, 110.36, 40, orientasi: 180, kemiringan: 15);
-var atapIdeal = new Lokasi("I", -7.72, 110.36, 40, orientasi: 0, kemiringan: 7.72);
-Debug.Assert(kalkulator.hitungFaktorOrientasi(atapUtara) > kalkulator.hitungFaktorOrientasi(atapSelatan), "utara harus lebih baik dari selatan");
-Debug.Assert(Math.Abs(kalkulator.hitungFaktorOrientasi(atapIdeal) - 1.0) < 1e-9, "posisi ideal harus bernilai 1");
+        // Orientasi: di belahan selatan, atap menghadap utara harus lebih baik daripada menghadap selatan.
+        var atapUtara = new Lokasi("U", -7.72, 110.36, 40, orientasi: 0, kemiringan: 15);
+        var atapSelatan = new Lokasi("S", -7.72, 110.36, 40, orientasi: 180, kemiringan: 15);
+        var atapIdeal = new Lokasi("I", -7.72, 110.36, 40, orientasi: 0, kemiringan: 7.72);
+        Debug.Assert(kalkulator.hitungFaktorOrientasi(atapUtara) > kalkulator.hitungFaktorOrientasi(atapSelatan), "utara harus lebih baik dari selatan");
+        Debug.Assert(Math.Abs(kalkulator.hitungFaktorOrientasi(atapIdeal) - 1.0) < 1e-9, "posisi ideal harus bernilai 1");
 
-// Bulan di luar 1..12 harus ditolak.
-bool ditolak = false;
-try { kalkulator.hitungProduksiBulanan(13); } catch (ArgumentOutOfRangeException) { ditolak = true; }
-Debug.Assert(ditolak, "bulan 13 mestinya ditolak");
+        // Bulan di luar 1..12 harus ditolak.
+        bool ditolak = false;
+        try { kalkulator.hitungProduksiBulanan(13); } catch (ArgumentOutOfRangeException) { ditolak = true; }
+        Debug.Assert(ditolak, "bulan 13 mestinya ditolak");
+
+        CekPolimorfismePanel(kalkulator, panel);
 
         // Produksi wajar untuk PLTS di Indonesia: 1.100-1.600 kWh per kWp per tahun.
         double produksi = kalkulator.hitungProduksiTahunan();
@@ -87,13 +89,43 @@ Debug.Assert(skenario.Keuntungan25Tahun > 0, "keuntungan 25 tahun mestinya posit
         CekTampilanRiwayat();
     }
 
+    /// <summary>
+    /// Satu panggilan method yang sama (hitungKoreksiSuhu) harus memberi hasil berbeda
+    /// sesuai jenis panel yang sedang dipegang: itu polimorfisme yang dipakai kalkulator.
+    /// </summary>
+    private static void CekPolimorfismePanel(KalkulatorEnergi kalkulator, PanelSurya mono)
+    {
+        PanelSurya thinFilm = new PanelThinFilm("Contoh TF 550", 550, 21.3, koefisienSuhu: 0.4,
+                                                luasPerPanel: 2.6, hargaPerUnit: 2_750_000);
+
+        Debug.Assert(mono.Jenis == "Monokristalin" && thinFilm.Jenis == "Thin film (a-Si)",
+            "jenis panel harus dijawab masing-masing turunan");
+
+        // Spesifikasi identik, hanya teknologi selnya beda: thin film menahan panas lebih baik.
+        double koreksiMono = kalkulator.hitungKoreksiSuhu(27, mono);
+        double koreksiThin = kalkulator.hitungKoreksiSuhu(27, thinFilm);
+        Debug.Assert(koreksiThin > koreksiMono,
+            $"thin film mestinya lebih tahan panas: mono {koreksiMono}, thin film {koreksiThin}");
+
+        // Sel 52 C -> annealing (52 - 40) x 0,1% = 1,2% di atas rumus kristalin 0,892.
+        Debug.Assert(Math.Abs(koreksiThin - 0.904) < 1e-9, $"koreksi thin film meleset: {koreksiThin}");
+
+        // Di bawah suhu annealing kedua panel kembali sama.
+        Debug.Assert(mono.hitungKoreksiSuhu(35).Equals(thinFilm.hitungKoreksiSuhu(35)),
+            "di bawah 40 C thin film harus memakai rumus warisan dari class dasar");
+
+        // Method bukan-virtual tetap diwarisi apa adanya oleh kedua turunan.
+        Debug.Assert(thinFilm.hitungJumlahPanel(30) == mono.hitungJumlahPanel(30),
+            "hitungJumlahPanel diwarisi, tidak boleh beda");
+    }
+
     private static void CekTampilanRiwayat()
     {
         var baris = new Views.RiwayatPage.Baris(new SimulasiSkenario("uji", "Rumah", new DateTime(2026, 9, 6),
             5847, 14_880_000, double.PositiveInfinity, 5100));
         Debug.Assert(baris.Hemat == "Rp 1.240.000", "riwayat harus mengubah penghematan tahunan ke bulanan");
         Debug.Assert(baris.Payback == "Tidak balik modal", "payback tak hingga harus terbaca di riwayat");
-        Debug.Assert(baris.Luas == "—" && baris.Kapasitas == "—" && baris.Untung == "—",
+        Debug.Assert(baris.Luas == "-" && baris.Kapasitas == "-" && baris.Untung == "-",
             "detail yang belum tersimpan tidak boleh ditebak");
         int perubahan = 0;
         baris.PropertyChanged += (_, _) => perubahan++;

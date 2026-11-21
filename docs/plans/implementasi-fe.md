@@ -23,10 +23,12 @@ Hanya pemilik yang boleh mengubah berkas di kolomnya.
 | `Views/HasilPage.xaml` + `.cs` | FE-B |
 | `Views/RiwayatPage.xaml` + `.cs` | FE-B |
 | `Views/TentangPage.xaml` + `.cs` *(baru)* | FE-A |
+| `Views/AsumsiTampilan.cs` *(baru, sementara, dihapus setelah BE-8)* | FE-A |
+| `Assets/`: logo `suncost.ico`, `ilustrasi-kosong.png` | FE-A (dipakai bersama) |
 
 Halaman Tentang semula ada di jalur FE-B dan dipindah ke FE-A untuk menyeimbangkan beban:
 tab Finansial (B2) di jalur FE-B berisi grafik arus kas yang harus digambar manual karena
-proyek tidak memakai pustaka grafik. Pemindahan ini tidak menimbulkan berkas bersama — setiap
+proyek tidak memakai pustaka grafik. Pemindahan ini tidak menimbulkan berkas bersama, setiap
 berkas tetap dimiliki tepat satu jalur.
 
 ## Kontrak antar-jalur
@@ -34,14 +36,14 @@ berkas tetap dimiliki tepat satu jalur.
 Disepakati di muka supaya kedua jalur bisa jalan paralel. Jangan diubah sepihak.
 
 ```csharp
-// Views/HasilPage.xaml.cs — dikerjakan FE-B (B1), dipanggil FE-A (A2)
+// Views/HasilPage.xaml.cs: dikerjakan FE-B (B1), dipanggil FE-A (A2)
 public HasilPage(SimulasiSkenario skenario)
 
-// Views/HasilPage.xaml.cs — konstruktor state memuat, dipanggil FE-A saat menunggu API
+// Views/HasilPage.xaml.cs: konstruktor state memuat, dipanggil FE-A saat menunggu API
 public HasilPage()                      // tanpa argumen = state "memuat data"
 public void TampilkanHasil(SimulasiSkenario skenario, bool dataCadangan)
 
-// MainWindow.xaml.cs — dikerjakan FE-A (A5), dipakai kedua jalur
+// MainWindow.xaml.cs: dikerjakan FE-A (A5), dipakai kedua jalur
 public void Buka(int halaman)
 public void Buka(UserControl halaman)   // navigasi membawa objek
 ```
@@ -50,7 +52,7 @@ public void Buka(UserControl halaman)   // navigasi membawa objek
 
 ---
 
-# FE-A — Farrel
+# FE-A: Farrel
 
 ## A1 · Token dan gaya bersama
 
@@ -64,17 +66,19 @@ Tambahkan dua brush yang dipakai state error dan dialog hapus:
 <SolidColorBrush x:Key="InputBrush"      Color="#FAF9F7"/>
 ```
 
-Skeleton memakai `TrackBrush` yang sudah ada (`#ECE9E4`) — jangan tambah brush baru untuk itu.
+Skeleton memakai `TrackBrush` yang sudah ada (`#ECE9E4`), jangan tambah brush baru untuk itu.
 
 Tambahkan juga gaya yang belum ada dan dibutuhkan kedua jalur:
 
-- `FieldInput` — `Border` radius 8, `InputBrush`, stroke 1px `BorderBrush`, padding `14,11`
-- `FieldInputError` — sama, stroke `DangerBrush`
-- `SecondaryButton` — radius 10, transparan, stroke 1px `BorderBrush`, teks `InkBrush`
-- `DangerButton` — radius 10, `DangerBrush`, teks putih
-- `FieldLabel` — 12px `MutedBrush`
-- `FieldHelper` — 11px `MutedBrush`
-- `FieldError` — 11px `DangerBrush`
+- `FieldInput`: `TextBox` radius 8, `InputBrush`, stroke 1px `BorderBrush`, padding `14,11`;
+  teks satuan (m², Rp/Wp) lewat properti `Tag`. Saat tidak valid cukup set `BorderBrush` ke
+  `DangerBrush`, dan `ClearValue` saat valid lagi supaya warna fokus kembali.
+- `FieldCombo`, `FieldSlider`, `FieldCheck`: dropdown, slider, dan checkbox bergaya sama
+- `SecondaryButton`: radius 10, transparan, stroke 1px `BorderBrush`, teks `InkBrush`
+- `DangerButton`: radius 10, `DangerBrush`, teks putih
+- `FieldLabel`: 12px `MutedBrush`
+- `FieldHelper`: 11px `MutedBrush`
+- `FieldError`: 11px `DangerBrush`
 
 **Selesai bila:** `dotnet build` bersih dan `BerandaPage` masih tampil seperti sebelumnya.
 
@@ -89,7 +93,7 @@ plus panel "Estimasi Langsung" di kanan (lebar 320) yang memperbarui diri setiap
 Panel estimasi menampilkan: kapasitas terpasang (kWp), jenis panel, jumlah panel,
 luas terpakai, Peak Sun Hours, Performance Ratio, koreksi suhu, estimasi biaya instalasi.
 
-Perhitungannya **jangan ditulis ulang** — pakai yang sudah ada:
+Perhitungannya **jangan ditulis ulang**: pakai yang sudah ada:
 
 ```csharp
 var lokasi = new Lokasi(nama, lat, lon, luasAtap, orientasi, kemiringan);
@@ -119,10 +123,10 @@ isian, bukan angka contoh.
 ## A3 · State validasi error
 
 Berkas: `Views/SimulasiPage.xaml` + `.cs`
-Desain: frame `7 · Input — validasi error`
+Desain: frame `7 · Input (validasi error)`
 
 Validasi dijalankan saat isian kehilangan fokus dan saat tombol Hitung ditekan.
-Gunakan `Lokasi.validasi()` yang sudah ada — **jangan buat validator baru**.
+Gunakan `Lokasi.validasi()` yang sudah ada, **jangan buat validator baru**.
 
 | Isian | Aturan | Pesan |
 |---|---|---|
@@ -134,7 +138,7 @@ Gunakan `Lokasi.validasi()` yang sudah ada — **jangan buat validator baru**.
 | Tarif per kWh | `> 0` bila manual | `Tarif per kWh harus lebih dari 0.` |
 
 Banner di atas form menyebut jumlah isian bermasalah. Tombol Hitung nonaktif selama ada error,
-dan panel estimasi menampilkan `—`.
+dan panel estimasi menampilkan `-`.
 
 **Selesai bila:** luas atap `0` memunculkan border merah, pesan, banner, dan tombol nonaktif;
 memperbaikinya mengembalikan semuanya ke normal.
@@ -142,7 +146,7 @@ memperbaikinya mengembalikan semuanya ke normal.
 ## A4 · State tarif manual
 
 Berkas: `Views/SimulasiPage.xaml` + `.cs`
-Desain: frame `8 · Input — tarif manual`
+Desain: frame `8 · Input (tarif manual)`
 
 Checkbox "Masukkan tarif sendiri" mematikan dropdown golongan dan memunculkan isian
 `Tarif per kWh`. Nilainya dipakai membuat `TarifListrikPLN` dengan golongan `"Tarif manual"`
@@ -170,7 +174,7 @@ Konten.Content = Nav.SelectedIndex switch
 Tambahkan `Buka(UserControl halaman)` supaya `SimulasiPage` dapat berpindah ke `HasilPage`
 sambil membawa objek skenario, tanpa lewat indeks nav.
 
-Buat `Views/TentangPage.xaml` sebagai `UserControl` kosong supaya navigasi bisa dikompilasi —
+Buat `Views/TentangPage.xaml` sebagai `UserControl` kosong supaya navigasi bisa dikompilasi,
 isinya dikerjakan di A7.
 
 **Selesai bila:** keempat item sidebar membuka halaman masing-masing, dan komentar
@@ -187,7 +191,7 @@ Dua hal yang perlu diperbaiki sekalian:
 
 - kartu di Figma menampilkan **Kapasitas / Balik modal / Hemat per bulan**, sedangkan kode
   sekarang menampilkan **Produksi per tahun / Balik modal / Hemat per tahun**. Ikuti Figma.
-- bila riwayat kosong, tampilkan ajakan "Belum ada simulasi — mulai dari Simulasi Baru",
+- bila riwayat kosong, tampilkan ajakan "Belum ada simulasi, mulai dari Simulasi Baru",
   bukan kartu kosong.
 
 **Selesai bila:** menyimpan simulasi baru membuat kartunya muncul di Beranda setelah pindah halaman.
@@ -208,7 +212,7 @@ Nilai konstanta ditampilkan dari kode, bukan ditulis tangan di XAML, supaya tida
 Performance Ratio dari `KalkulatorEnergi`, degradasi dan umur sistem dari `AnalisisFinansial`,
 faktor pemanfaatan atap dari `Lokasi`, faktor emisi dari `DampakLingkungan`.
 
-Sebagian konstanta itu kini `private`. Membukanya **bukan tugas A7** — `Services/` dan `Models/`
+Sebagian konstanta itu kini `private`. Membukanya **bukan tugas A7**: `Services/` dan `Models/`
 milik jalur backend, dan BE-8 sudah menyentuh berkas yang sama. Konstanta publiknya disediakan
 di BE-8. Sambil menunggu, susun tata letak dan teks statis (tim, sumber data, disclaimer) lebih
 dulu.
@@ -221,14 +225,14 @@ Halaman ini memenuhi klaim "menampilkan seluruh asumsi secara terbuka" di README
 
 ---
 
-# FE-B — Mayravivania
+# FE-B: Mayravivania
 
 ## B1 · HasilPage menerima data nyata
 
 Berkas: `Views/HasilPage.xaml.cs`
-Desain: frame `3 · Hasil — Energi`
+Desain: frame `3 · Hasil (Energi)`
 
-**Kerjakan ini paling awal** — jalur FE-A tidak bisa dikompilasi sebelum konstruktor ini ada.
+**Kerjakan ini paling awal**: jalur FE-A tidak bisa dikompilasi sebelum konstruktor ini ada.
 
 Terapkan kontrak di bagian [Kontrak antar-jalur](#kontrak-antar-jalur).
 
@@ -251,15 +255,20 @@ PSH dari `DataRadiasi.getRataRataTahunan()`, Performance Ratio dari `KalkulatorE
 koreksi suhu dari `panel.hitungKoreksiSuhu(...)`.
 
 > Teks Figma menulis PSH "10 tahun terakhir" dan PR `0,78`, sedangkan kode mengambil 1 tahun
-> dan memakai `0.80`. Lihat [ADR 0001](../decisions/0001-asumsi-perhitungan.md) — ikuti nilai
+> dan memakai `0.80`. Lihat [ADR 0001](../decisions/0001-asumsi-perhitungan.md): ikuti nilai
 > yang diputuskan di sana, jangan menebak.
 
 **Selesai bila:** dua skenario berbeda menghasilkan grafik dan KPI yang berbeda.
 
+**Bergantung pada:** BE-2. `SimulasiSkenario` sekarang menyimpan lokasi, panel, dan data
+radiasi sebagai `private` tanpa getter, dan belum punya tempat untuk tagihan bulanan, B1
+tidak bisa menghitung grafik bulanan maupun KPI "Setara konsumsi" sebelum BE-2 menambahkannya.
+Konstruktor dan tata letaknya tetap bisa dikerjakan lebih dulu.
+
 ## B2 · Tab Finansial & Lingkungan
 
 Berkas: `Views/HasilPage.xaml` + `.cs`
-Desain: frame `4 · Hasil — Finansial`
+Desain: frame `4 · Hasil (Finansial)`
 
 Hapus `TabFinansial_Checked` yang sekarang hanya memunculkan `MessageBox`.
 
@@ -270,7 +279,7 @@ Grafik **Arus Kas Kumulatif 25 Tahun** dengan garis nol dan penanda titik balik 
 Panel **Dampak Lingkungan**: emisi CO₂ dihindari per tahun, setara pohon, setara km mobil,
 total CO₂ 25 tahun.
 
-Tiga nilai berikut belum punya method — disediakan BE-7, jangan dihitung di view:
+Tiga nilai berikut belum punya method, disediakan BE-7, jangan dihitung di view:
 
 ```csharp
 List<double> AnalisisFinansial.proyeksiArusKas()        // 26 nilai, tahun 0..25
@@ -286,10 +295,10 @@ dan titik balik modal pada grafik sama dengan KPI periode balik modal.
 ## B3 · State memuat data
 
 Berkas: `Views/HasilPage.xaml` + `.cs`
-Desain: frame `9 · Hasil — memuat data`
+Desain: frame `9 · Hasil (memuat data)`
 
 Konstruktor tanpa argumen menampilkan skeleton `TrackBrush` di tempat angka KPI, batang grafik,
-dan nilai asumsi, plus banner "Mengambil data radiasi Open-Meteo untuk {lokasi} — biasanya
+dan nilai asumsi, plus banner "Mengambil data radiasi Open-Meteo untuk {lokasi}, biasanya
 5–20 detik."
 
 `TampilkanHasil(...)` mengganti skeleton dengan angka sebenarnya.
@@ -302,14 +311,14 @@ pernah membeku.
 ## B4 · State data cadangan
 
 Berkas: `Views/HasilPage.xaml` + `.cs`
-Desain: frame `10 · Hasil — data cadangan`
+Desain: frame `10 · Hasil (data cadangan)`
 
 Bila `TampilkanHasil` dipanggil dengan `dataCadangan: true`, tampilkan banner `AccentSoftBrush`:
 
 > Open-Meteo tidak dapat dihubungi. Angka di bawah memakai data cadangan rata-rata Indonesia
-> (4,5 kWh/m²/hari) — kurang akurat untuk lokasi ini.
+> (4,5 kWh/m²/hari), kurang akurat untuk lokasi ini.
 
-Baris PSH pada Asumsi ditandai `AccentBrush` dengan keterangan "Cadangan rata-rata Indonesia —
+Baris PSH pada Asumsi ditandai `AccentBrush` dengan keterangan "Cadangan rata-rata Indonesia,
 API tidak terjangkau", dan subjudul halaman diberi akhiran "· data cadangan".
 
 Ini bukan hiasan: `LayananCuacaAPI.ambilDataRadiasi()` saat ini mengembalikan rata-rata nasional
@@ -321,12 +330,12 @@ bukan angka yang tampak normal.
 ## B5 · Hapus skenario
 
 Berkas: `Views/RiwayatPage.xaml` + `.cs`
-Desain: frame `12 · Riwayat — konfirmasi hapus`
+Desain: frame `12 · Riwayat (konfirmasi hapus)`
 
 Tambahkan kolom **Aksi** berisi ikon hapus di tiap baris. Mengkliknya memunculkan dialog 420px
 di atas overlay hitam 38%, dengan tombol `Batal` (`SecondaryButton`) dan `Hapus` (`DangerButton`).
 
-Service-nya sudah ada — `RiwayatSimulasi.hapusSkenario(id)`. Jangan menulis query baru.
+Service-nya sudah ada, `RiwayatSimulasi.hapusSkenario(id)`. Jangan menulis query baru.
 
 Dialog menyebut nama skenario dan menyatakan bahwa tindakan tidak dapat dibatalkan.
 
@@ -336,13 +345,22 @@ aplikasi dibuka ulang.
 ## B6 · Riwayat kosong
 
 Berkas: `Views/RiwayatPage.xaml` + `.cs`
-Desain: frame `11 · Riwayat — kosong`
+Desain: frame `11 · Riwayat (kosong)`
 
 Ganti perilaku sekarang yang menampilkan lima baris data contoh Figma. Menampilkan data palsu
 yang tampak nyata lebih buruk daripada menampilkan keadaan kosong.
 
-Kartu empty state: ikon matahari dalam lingkaran `AccentSoftBrush`, judul "Belum ada simulasi
-tersimpan", penjelasan, tombol "Mulai Simulasi" yang membuka halaman Simulasi Baru.
+Kartu empty state: ilustrasi rumah berpanel, judul "Belum ada simulasi tersimpan", penjelasan,
+tombol "Mulai Simulasi" yang membuka halaman Simulasi Baru.
+
+Ilustrasinya **sudah tersedia** di `Assets/ilustrasi-kosong.png` (480×480, latar transparan,
+sudah terdaftar sebagai `Resource` di csproj), jangan buat ulang. Pemakaian yang sama sudah ada
+di kartu kosong Beranda:
+
+```xml
+<Image Source="/Assets/ilustrasi-kosong.png" Width="160" Height="160"
+       RenderOptions.BitmapScalingMode="HighQuality"/>
+```
 Tombol Bandingkan nonaktif bertuliskan `Bandingkan (0)`.
 
 **Selesai bila:** menghapus berkas `%LOCALAPPDATA%\SunCost\suncost.db` lalu membuka Riwayat
