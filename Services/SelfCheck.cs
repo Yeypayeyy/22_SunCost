@@ -32,6 +32,22 @@ public static class SelfCheck
         // Udara 27 C -> sel 52 C -> rugi (52 - 25) x 0,4% = 10,8%.
         Debug.Assert(Math.Abs(kalkulator.hitungKoreksiSuhu(27, panel) - 0.892) < 1e-9, "koreksi suhu meleset");
 
+        // Koefisien dari datasheet sering negatif; hasilnya harus sama.
+var panelNegatif = new PanelSurya("Negatif", 550, 21.3, koefisienSuhu: -0.4, luasPerPanel: 2.6, hargaPerUnit: 2_750_000);
+Debug.Assert(Math.Abs(kalkulator.hitungKoreksiSuhu(27, panelNegatif) - 0.892) < 1e-9, "koefisien negatif harus diperlakukan sama");
+
+// Orientasi: di belahan selatan, atap menghadap utara harus lebih baik daripada menghadap selatan.
+var atapUtara = new Lokasi("U", -7.72, 110.36, 40, orientasi: 0, kemiringan: 15);
+var atapSelatan = new Lokasi("S", -7.72, 110.36, 40, orientasi: 180, kemiringan: 15);
+var atapIdeal = new Lokasi("I", -7.72, 110.36, 40, orientasi: 0, kemiringan: 7.72);
+Debug.Assert(kalkulator.hitungFaktorOrientasi(atapUtara) > kalkulator.hitungFaktorOrientasi(atapSelatan), "utara harus lebih baik dari selatan");
+Debug.Assert(Math.Abs(kalkulator.hitungFaktorOrientasi(atapIdeal) - 1.0) < 1e-9, "posisi ideal harus bernilai 1");
+
+// Bulan di luar 1..12 harus ditolak.
+bool ditolak = false;
+try { kalkulator.hitungProduksiBulanan(13); } catch (ArgumentOutOfRangeException) { ditolak = true; }
+Debug.Assert(ditolak, "bulan 13 mestinya ditolak");
+
         // Produksi wajar untuk PLTS di Indonesia: 1.100-1.600 kWh per kWp per tahun.
         double produksi = kalkulator.hitungProduksiTahunan();
         double perKwp = produksi / 6.05;
