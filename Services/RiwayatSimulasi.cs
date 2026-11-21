@@ -35,6 +35,9 @@ public class RiwayatSimulasi
         double selisihHemat = Math.Abs(a.PenghematanTahunan - b.PenghematanTahunan);
         string hemat = string.Format(FormatId.Angka, "Selisih penghematan Rp {0:#,##0} per tahun.", selisihHemat);
 
+                if (double.IsInfinity(a.PaybackPeriod) && double.IsInfinity(b.PaybackPeriod))
+            return $"{a.Nama} dan {b.Nama} sama-sama tidak balik modal dalam 25 tahun. {hemat}";
+
         if (a.PaybackPeriod.Equals(b.PaybackPeriod))
             return $"{a.Nama} dan {b.Nama} balik modal dalam waktu yang sama. {hemat}";
 
