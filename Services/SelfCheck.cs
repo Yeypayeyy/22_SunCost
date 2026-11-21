@@ -86,6 +86,7 @@ Debug.Assert(skenario.BiayaInstalasi is { } biayaSkenario && Math.Abs(biayaSkena
 Debug.Assert(skenario.Keuntungan25Tahun > 0, "keuntungan 25 tahun mestinya positif");
 
         CekPenyimpanan(skenario);
+        CekSkemaPenuh();
         CekTampilanRiwayat();
     }
 
@@ -135,6 +136,77 @@ Debug.Assert(skenario.Keuntungan25Tahun > 0, "keuntungan 25 tahun mestinya posit
         Debug.Assert(perubahan == 2, "checkbox riwayat harus memperbarui pilihan hanya saat nilainya berubah");
     }
 
+    private static long Hitung(Microsoft.Data.Sqlite.SqliteConnection db, string sql)
+    {
+        using var cmd = db.CreateCommand();
+        cmd.CommandText = sql;
+        return Convert.ToInt64(cmd.ExecuteScalar());
+    }
+
+    private static void PeriksaSkema(RepositoriSimulasi repo, string label)
+    {
+        using var db = repo.BukaKoneksi();
+        Debug.Assert(Hitung(db, "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name IN " +
+            "('lokasi','panel_surya','tarif_listrik_pln','data_radiasi','radiasi_bulanan','skenario')") == 6,
+            $"{label}: enam tabel ERD harus ada");
+        Debug.Assert(Hitung(db, "SELECT COUNT(*) FROM pragma_table_info('skenario') WHERE name IN " +
+            "('lokasi_id','panel_id','tarif_id','data_radiasi_id','biaya_per_wp','degradasi_tahunan'," +
+            "'faktor_emisi_co2','jumlah_panel','kapasitas_wp')") == 9,
+            $"{label}: sembilan kolom tambahan skenario harus ada");
+        Debug.Assert(Hitung(db, "PRAGMA foreign_keys;") == 1, $"{label}: foreign key harus menyala di setiap koneksi");
+    }
+
+    private static void CekSkemaPenuh()
+    {
+        string lama = Path.Combine(Path.GetTempPath(), $"suncost-skema-lama-{Guid.NewGuid():N}.db");
+        string baru = Path.Combine(Path.GetTempPath(), $"suncost-skema-baru-{Guid.NewGuid():N}.db");
+        try
+        {
+            // Database versi lama: hanya tujuh kolom hasil dan satu baris data.
+            using (var db = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={lama}"))
+            {
+                db.Open();
+                using var cmd = db.CreateCommand();
+                cmd.CommandText = """
+                    CREATE TABLE skenario (id TEXT PRIMARY KEY, nama TEXT NOT NULL, tanggal TEXT NOT NULL,
+                        produksi_tahunan REAL NOT NULL, penghematan_tahunan REAL NOT NULL,
+                        payback_period REAL NOT NULL, emisi_dihindari REAL NOT NULL);
+                    INSERT INTO skenario VALUES ('lama', 'Skenario lama', '2026-01-01T00:00:00.0000000', 5000, 7000000, 8.5, 4000);
+                    """;
+                cmd.ExecuteNonQuery();
+            }
+
+            var repoLama = new RepositoriSimulasi(lama);
+            PeriksaSkema(repoLama, "database lama");
+            var riwayat = repoLama.ambilSemua();
+            Debug.Assert(riwayat.Count == 1 && riwayat[0].Nama == "Skenario lama" && riwayat[0].ProduksiTahunan == 5000,
+                "riwayat lama harus tetap terbaca setelah migrasi");
+            _ = new RepositoriSimulasi(lama);   // migrasi kedua tidak boleh melempar pengecualian
+
+            // Database baru langsung memakai skema penuh.
+            PeriksaSkema(new RepositoriSimulasi(baru), "database baru");
+
+            // Foreign key benar-benar ditegakkan.
+            using var uji = repoLama.BukaKoneksi();
+            bool ditolak = false;
+            try
+            {
+                using var cmd = uji.CreateCommand();
+                cmd.CommandText = "INSERT INTO skenario (id, nama, tanggal, produksi_tahunan, penghematan_tahunan, " +
+                                  "payback_period, emisi_dihindari, lokasi_id) " +
+                                  "VALUES ('x', 'x', '2026-01-01', 1, 1, 1, 1, 'lokasi-tidak-ada');";
+                cmd.ExecuteNonQuery();
+            }
+            catch (Microsoft.Data.Sqlite.SqliteException) { ditolak = true; }
+            Debug.Assert(ditolak, "skenario dengan lokasi_id yang tidak ada harus ditolak foreign key");
+        }
+        finally
+        {
+            Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+            if (File.Exists(lama)) File.Delete(lama);
+            if (File.Exists(baru)) File.Delete(baru);
+        }
+    }
     private static void CekPenyimpanan(SimulasiSkenario s)
     {
         string berkas = Path.Combine(Path.GetTempPath(), $"suncost-selfcheck-{Guid.NewGuid():N}.db");
