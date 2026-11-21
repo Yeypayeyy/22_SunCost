@@ -29,11 +29,7 @@ public partial class HasilPage : UserControl
     public HasilPage()
     {
         InitializeComponent();
-
-        Ringkasan.Text = "Menunggu hasil simulasi…";
-        ProduksiTahunan.Text = "—";
-        RataBulanan.Text = "—";
-        SetaraKonsumsi.Text = "—";
+        TampilkanMemuat();
     }
 
     public HasilPage(SimulasiSkenario skenario) : this()
@@ -41,9 +37,45 @@ public partial class HasilPage : UserControl
         TampilkanHasil(skenario, dataCadangan: false);
     }
 
+    public void TampilkanMemuat(string? lokasi = null)
+    {
+        TabEnergi.IsChecked = true;
+        Ringkasan.Text = "Memuat data radiasi";
+        PesanMemuat.Text = string.IsNullOrWhiteSpace(lokasi)
+            ? "Mengambil data radiasi Open-Meteo. Biasanya 5–20 detik."
+            : $"Mengambil data radiasi Open-Meteo untuk {lokasi}. Biasanya 5–20 detik.";
+
+        AturSkeleton(true);
+
+        var track = (Brush)FindResource("TrackBrush");
+        var redup = (Brush)FindResource("MutedBrush");
+
+        Batang.ItemsSource = Bulan.Select(nama =>
+            new Bar(nama, 124, track, redup, FontWeights.Normal, "Memuat…")).ToArray();
+
+        Asumsi.ItemsSource = null;
+    }
+
+    private void AturSkeleton(bool memuat)
+    {
+        var skeleton = memuat ? Visibility.Visible : Visibility.Collapsed;
+        var angka = memuat ? Visibility.Hidden : Visibility.Visible;
+
+        BannerMemuat.Visibility = skeleton;
+        SkeletonTahunan.Visibility = skeleton;
+        SkeletonBulanan.Visibility = skeleton;
+        SkeletonKonsumsi.Visibility = skeleton;
+
+        ProduksiTahunan.Visibility = angka;
+        RataBulanan.Visibility = angka;
+        SetaraKonsumsi.Visibility = angka;
+        TabFinansial.IsEnabled = !memuat;
+    }
+
     public void TampilkanHasil(SimulasiSkenario skenario, bool dataCadangan)
     {
         ArgumentNullException.ThrowIfNull(skenario);
+        AturSkeleton(false);
 
         Ringkasan.Text = skenario.Nama;
         ProduksiTahunan.Text = skenario.ProduksiTahunan.ToString("#,##0", FormatId.Angka);

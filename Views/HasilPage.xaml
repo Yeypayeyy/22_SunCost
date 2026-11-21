@@ -17,7 +17,13 @@
                  Foreground="{StaticResource InkBrush}"/>
       <TextBlock x:Name="Ringkasan" FontSize="13" Foreground="{StaticResource MutedBrush}"
                  Margin="0,4,0,0"/>
-    </StackPanel>
+            <Border x:Name="BannerMemuat" Visibility="Collapsed"
+        Background="{StaticResource SubtleBrush}"
+        CornerRadius="8" Padding="14,10" Margin="0,12,0,0">
+                <TextBlock x:Name="PesanMemuat"
+             Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap"/>
+            </Border>
+        </StackPanel>
 
     <!-- Tabs -->
     <Border Grid.Row="1" Background="{StaticResource TrackBrush}" CornerRadius="10"
@@ -37,24 +43,39 @@
               VerticalAlignment="Top">
         <StackPanel>
           <TextBlock Text="Produksi tahunan" FontSize="12" Foreground="{StaticResource MutedBrush}"/>
-          <TextBlock x:Name="ProduksiTahunan" FontSize="40" FontWeight="SemiBold"
-                     Foreground="{StaticResource AccentBrush}" Margin="0,4"/>
-          <TextBlock Text="kWh/tahun" FontSize="12" Foreground="{StaticResource MutedBrush}"/>
+                    <Grid>
+                        <TextBlock x:Name="ProduksiTahunan" FontSize="40" FontWeight="SemiBold"
+             Foreground="{StaticResource AccentBrush}" Margin="0,4"/>
+                        <Border x:Name="SkeletonTahunan" Width="120" Height="24"
+          HorizontalAlignment="Left" CornerRadius="5"
+          Background="{StaticResource TrackBrush}" Visibility="Collapsed"/>
+                    </Grid>
+                    <TextBlock Text="kWh/tahun" FontSize="12" Foreground="{StaticResource MutedBrush}"/>
         </StackPanel>
       </Border>
       <Border Style="{StaticResource Card}" Padding="24,22" Margin="0,0,16,0" VerticalAlignment="Top">
         <StackPanel>
           <TextBlock Text="Rata-rata bulanan" FontSize="12" Foreground="{StaticResource MutedBrush}"/>
-          <TextBlock x:Name="RataBulanan" FontSize="30" FontWeight="SemiBold"
+                    <Grid>
+                        <TextBlock x:Name="RataBulanan" FontSize="30" FontWeight="SemiBold"
                      Foreground="{StaticResource InkBrush}" Margin="0,4"/>
+                        <Border x:Name="SkeletonBulanan" Width="96" Height="24"
+          HorizontalAlignment="Left" CornerRadius="5"
+          Background="{StaticResource TrackBrush}" Visibility="Collapsed"/>
+                    </Grid>
           <TextBlock Text="kWh/bulan" FontSize="12" Foreground="{StaticResource MutedBrush}"/>
         </StackPanel>
       </Border>
       <Border Style="{StaticResource Card}" Padding="24,22" Margin="0,0,16,0" VerticalAlignment="Top">
         <StackPanel>
           <TextBlock Text="Setara konsumsi" FontSize="12" Foreground="{StaticResource MutedBrush}"/>
-          <TextBlock x:Name="SetaraKonsumsi" FontSize="30" FontWeight="SemiBold"
+                    <Grid>
+                        <TextBlock x:Name="SetaraKonsumsi" FontSize="30" FontWeight="SemiBold"
                      Foreground="{StaticResource InkBrush}" Margin="0,4"/>
+                        <Border x:Name="SkeletonKonsumsi" Width="72" Height="24"
+          HorizontalAlignment="Left" CornerRadius="5"
+          Background="{StaticResource TrackBrush}" Visibility="Collapsed"/>
+                    </Grid>
           <TextBlock Text="dari tagihan saat ini" FontSize="12" Foreground="{StaticResource MutedBrush}"/>
         </StackPanel>
       </Border>
