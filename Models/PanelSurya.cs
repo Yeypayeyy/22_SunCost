@@ -2,18 +2,26 @@ using System;
 
 namespace SunCost.Models;
 
-/// <summary>Spesifikasi satu tipe modul surya.</summary>
-public class PanelSurya
+/// <summary>
+/// Spesifikasi satu modul surya. Class dasar: tiap teknologi sel (monokristalin, thin film, ...)
+/// mewarisi data dan rumus di sini, lalu menimpa bagian yang memang berbeda secara fisik.
+/// </summary>
+public abstract class PanelSurya
 {
-    private string merk;
-    private double kapasitasWp;     // daya puncak satu panel
-    private double efisiensi;       // persen
-    private double koefisienSuhu;   // penurunan daya (persen) per derajat di atas 25 C
-    private double luasPerPanel;    // m2
-    private double hargaPerUnit;    // rupiah
+    /// <summary>Suhu uji standar (STC) panel, derajat Celsius.</summary>
+    protected const double SuhuReferensi = 25.0;
 
-    public PanelSurya(string merk, double kapasitasWp, double efisiensi, double koefisienSuhu,
-                      double luasPerPanel, double hargaPerUnit)
+    // Encapsulation: data panel tertutup dari luar. Subclass boleh membaca (protected),
+    // kode di luar hierarki hanya lewat method publik di bawah.
+    protected string merk;
+    protected double kapasitasWp;     // daya puncak satu panel
+    protected double efisiensi;       // persen
+    protected double koefisienSuhu;   // penurunan daya (persen) per derajat di atas 25 C
+    protected double luasPerPanel;    // m2
+    protected double hargaPerUnit;    // rupiah
+
+    protected PanelSurya(string merk, double kapasitasWp, double efisiensi, double koefisienSuhu,
+                         double luasPerPanel, double hargaPerUnit)
     {
         this.merk = merk;
         this.kapasitasWp = kapasitasWp;
@@ -23,8 +31,10 @@ public class PanelSurya
         this.hargaPerUnit = hargaPerUnit;
     }
 
-    /// <summary>Dibaca KalkulatorEnergi untuk koreksi suhu.</summary>
-    public double KoefisienSuhu => koefisienSuhu;
+    /// <summary>Nama teknologi sel, wajib diisi tiap turunan.</summary>
+    public abstract string Jenis { get; }
+
+    public string Merk => merk;
 
     /// <summary>Jumlah panel utuh yang muat pada luas atap tertentu.</summary>
     public int hitungJumlahPanel(double luasAtap) =>
@@ -32,4 +42,12 @@ public class PanelSurya
 
     /// <summary>Kapasitas total dalam Wp.</summary>
     public double hitungKapasitasTotal(int jumlah) => jumlah * kapasitasWp;
+
+    /// <summary>
+    /// Faktor pengali daya akibat panas sel: 1,0 pada suhu referensi, turun linear sebesar
+    /// koefisien suhu per derajat. Panel kristalin memakai rumus ini; teknologi lain menimpanya.
+    /// </summary>
+    // Math.Abs: datasheet biasa menulis -0,35; tanda diabaikan agar produksi tidak malah naik.
+    public virtual double hitungKoreksiSuhu(double suhuSel) =>
+        Math.Max(0.3, 1 - Math.Max(0, suhuSel - SuhuReferensi) * Math.Abs(koefisienSuhu) / 100);
 }

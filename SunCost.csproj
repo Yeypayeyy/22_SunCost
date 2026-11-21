@@ -3,15 +3,19 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
-	  <DefaultItemExcludes>$(DefaultItemExcludes);SunCost/**</DefaultItemExcludes>
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
     <RootNamespace>SunCost</RootNamespace>
+    <ApplicationIcon>Assets\suncost.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
+    <Resource Include="Assets\suncost.ico" />
+    <Resource Include="Assets\ilustrasi-kosong.png" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.10" />
-    <PackageReference Include="Npgsql" Version="10.0.3" />
   </ItemGroup>
 
 </Project>

@@ -5,15 +5,21 @@
 
   <StackPanel Margin="40,36">
 
-    <!-- Hero -->
-    <Border Style="{StaticResource Card}" CornerRadius="16" Padding="40">
+    <!-- Hero: gradasi gelap ala opsi B2 di Figma, tanpa foto -->
+    <Border CornerRadius="16" Padding="40">
+      <Border.Background>
+        <LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5">
+          <GradientStop Color="#1C1B19" Offset="0"/>
+          <GradientStop Color="#2A2623" Offset="0.55"/>
+          <GradientStop Color="#3D3630" Offset="1"/>
+        </LinearGradientBrush>
+      </Border.Background>
       <StackPanel>
         <TextBlock Text="Berapa hemat listrik dari atap rumahmu?"
-                   FontSize="34" FontWeight="SemiBold"
-                   Foreground="{StaticResource InkBrush}"
+                   FontSize="34" FontWeight="SemiBold" Foreground="White"
                    TextWrapping="Wrap" MaxWidth="620" HorizontalAlignment="Left"/>
-        <TextBlock Text="Hitung produksi energi, penghematan tagihan, dan waktu balik modal panel surya — dengan seluruh asumsi perhitungan ditampilkan terbuka."
-                   FontSize="15" Foreground="{StaticResource MutedBrush}"
+        <TextBlock Text="Hitung produksi energi, penghematan tagihan, dan waktu balik modal panel surya, dengan seluruh asumsi perhitungan ditampilkan terbuka."
+                   FontSize="15" Foreground="#D9D3CA"
                    TextWrapping="Wrap" MaxWidth="560" HorizontalAlignment="Left"
                    Margin="0,16,0,0"/>
         <Button Content="Mulai Simulasi" Style="{StaticResource PrimaryButton}"
@@ -25,11 +31,28 @@
     <TextBlock Text="Simulasi Terakhir" FontSize="16" FontWeight="SemiBold"
                Foreground="{StaticResource InkBrush}" Margin="0,28,0,12"/>
 
+    <!-- Keadaan kosong / gagal memuat -->
+    <Border x:Name="Kosong" Style="{StaticResource Card}" Padding="24,20" Visibility="Collapsed">
+      <DockPanel>
+        <Image x:Name="KosongGambar" DockPanel.Dock="Left" Source="/Assets/ilustrasi-kosong.png"
+               Width="80" Height="80" Margin="0,0,20,0" VerticalAlignment="Center"
+               RenderOptions.BitmapScalingMode="HighQuality"/>
+        <Button DockPanel.Dock="Right" Content="Mulai Simulasi" Style="{StaticResource SecondaryButton}"
+                VerticalAlignment="Center" Click="MulaiSimulasi_Click"/>
+        <StackPanel VerticalAlignment="Center">
+          <TextBlock x:Name="KosongJudul" Text="Belum ada simulasi" FontSize="14" FontWeight="SemiBold"
+                     Foreground="{StaticResource InkBrush}"/>
+          <TextBlock x:Name="KosongIsi" FontSize="12" Foreground="{StaticResource MutedBrush}" Margin="0,2,0,0"
+                     Text="Hasil simulasimu akan muncul di sini, tersimpan di perangkat ini."/>
+        </StackPanel>
+      </DockPanel>
+    </Border>
+
     <!-- Kartu riwayat terakhir -->
     <ItemsControl x:Name="RiwayatTerakhir">
       <ItemsControl.ItemsPanel>
         <ItemsPanelTemplate>
-          <UniformGrid Rows="1"/>
+          <UniformGrid Columns="3"/>
         </ItemsPanelTemplate>
       </ItemsControl.ItemsPanel>
 
@@ -48,8 +71,8 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Grid.Column="0" Margin="0,0,24,0">
-                  <TextBlock Text="Produksi per tahun" FontSize="11" Foreground="{StaticResource MutedBrush}"/>
-                  <TextBlock Text="{Binding ProduksiTeks}" FontSize="17" FontWeight="SemiBold"
+                  <TextBlock Text="Kapasitas" FontSize="11" Foreground="{StaticResource MutedBrush}"/>
+                  <TextBlock Text="{Binding KapasitasTeks}" FontSize="17" FontWeight="SemiBold"
                              Foreground="{StaticResource InkBrush}"/>
                 </StackPanel>
 
@@ -61,7 +84,7 @@
               </Grid>
 
               <StackPanel Margin="0,14,0,0">
-                <TextBlock Text="Hemat per tahun" FontSize="11" Foreground="{StaticResource MutedBrush}"/>
+                <TextBlock Text="Hemat per bulan" FontSize="11" Foreground="{StaticResource MutedBrush}"/>
                 <TextBlock Text="{Binding HematTeks}" FontSize="17" FontWeight="SemiBold"
                            Foreground="{StaticResource GreenBrush}"/>
               </StackPanel>

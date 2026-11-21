@@ -89,7 +89,7 @@ erDiagram
 | DATA_RADIASI → RADIASI_BULANAN | tepat 12 baris, satu per bulan |
 | DATA_RADIASI → SKENARIO | satu set data iklim menjadi dasar banyak skenario |
 
-`RADIASI_BULANAN` dipisah karena `DataRadiasi` menyimpan `List<double>` 12 nilai —
+`RADIASI_BULANAN` dipisah karena `DataRadiasi` menyimpan `List<double>` 12 nilai,
 menaruhnya sebagai 12 kolom melanggar 1NF dan menyulitkan query per bulan.
 
 Kolom `biaya_per_wp`, `degradasi_tahunan`, dan `faktor_emisi_co2` ikut disimpan di `SKENARIO`

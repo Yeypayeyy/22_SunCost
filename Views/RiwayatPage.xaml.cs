@@ -6,7 +6,6 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using Microsoft.Data.Sqlite;
-using Npgsql;
 using SunCost.Models;
 using SunCost.Services;
 
@@ -18,11 +17,11 @@ public partial class RiwayatPage : UserControl
     {
         public SimulasiSkenario Skenario { get; }
         public string Nama => Skenario.Nama;
-        public string Luas { get; init; } = "—";
-        public string Kapasitas { get; init; } = "—";
+        public string Luas { get; init; } = "-";
+        public string Kapasitas { get; init; } = "-";
         public string Judul { get; init; }
         public string Keterangan { get; init; } = "Data riwayat tersimpan";
-        public string Untung { get; init; } = "—";
+        public string Untung { get; init; } = "-";
         public string Produksi => Skenario.ProduksiTahunan.ToString("#,##0", FormatId.Angka) + " kWh";
         public string Payback => double.IsFinite(Skenario.PaybackPeriod)
             ? Skenario.PaybackPeriod.ToString("0.0", FormatId.Angka) + " tahun" : "Tidak balik modal";
@@ -57,26 +56,24 @@ public partial class RiwayatPage : UserControl
         InitializeComponent();
         try
         {
-            // PostgreSQL bila variabel SUNCOST_PG terisi, selain itu SQLite lokal
-            var repositori = FabrikRepositori.Buat();
-            var riwayat = new RiwayatSimulasi(repositori).muatRiwayat();
+            var riwayat = new RiwayatSimulasi(new RepositoriSimulasi()).muatRiwayat();
             daftar = riwayat.Select(s => new Baris(s)).ToList();
             if (daftar.Count == 0)
             {
                 daftar = Contoh();
-                Status.Text = "Sumber data: " + repositori.Jenis + ". Belum ada riwayat tersimpan. Menampilkan data contoh Figma; contoh ini tidak disimpan.";
+                Status.Text = "Belum ada riwayat tersimpan. Menampilkan data contoh Figma; contoh ini tidak disimpan.";
                 daftar[0].Dipilih = daftar[1].Dipilih = true;
             }
             else
             {
                 // shortcut: riwayat lama tidak menyimpan detail atap dan proyeksi, tampilkan setelah data tersebut dipersistenkan.
-                Status.Text = "Sumber data: " + repositori.Jenis + ". Luas atap, kapasitas, dan keuntungan 25 tahun belum tersedia pada data riwayat tersimpan (—).";
+                Status.Text = "Luas atap, kapasitas, dan keuntungan 25 tahun belum tersedia pada data riwayat tersimpan (-).";
             }
             Tabel.ItemsSource = daftar;
             PerbaruiPilihan();
             if (daftar.Count(s => s.Dipilih) >= 2) TampilkanPerbandingan();
         }
-        catch (Exception ex) when (ex is SqliteException or NpgsqlException or IOException or UnauthorizedAccessException or FormatException)
+        catch (Exception ex) when (ex is SqliteException or IOException or UnauthorizedAccessException or FormatException)
         {
             Status.Text = "Riwayat tidak dapat dimuat. Periksa akses dan berkas penyimpanan lokal, lalu buka kembali halaman ini.";
             Petunjuk.Text = "Data tersimpan tidak diubah.";
@@ -127,7 +124,7 @@ public partial class RiwayatPage : UserControl
             Luas = "32 m²", Kapasitas = "4,2 kWp", Judul = "Atap menghadap utara",
             Keterangan = "Orientasi 0° · kemiringan 15°", Untung = "Rp 261.000.000"
         },
-        new(new SimulasiSkenario("contoh-2", "Sleman, DIY — atap barat", new DateTime(2026, 9, 6), 4738, 1_005_000 * 12, 7.8, 4122))
+        new(new SimulasiSkenario("contoh-2", "Sleman, DIY (atap barat)", new DateTime(2026, 9, 6), 4738, 1_005_000 * 12, 7.8, 4122))
         {
             Luas = "32 m²", Kapasitas = "4,2 kWp", Judul = "Atap menghadap barat",
             Keterangan = "Orientasi 270° · kemiringan 15°", Untung = "Rp 199.000.000"
@@ -136,7 +133,7 @@ public partial class RiwayatPage : UserControl
         { Luas = "24 m²", Kapasitas = "3,0 kWp", Keterangan = "Data contoh Figma" },
         new(new SimulasiSkenario("contoh-4", "Depok, Jawa Barat", new DateTime(2026, 8, 28), 7900, 1_610_000 * 12, 5.8, 6272))
         { Luas = "42 m²", Kapasitas = "5,5 kWp", Keterangan = "Data contoh Figma" },
-        new(new SimulasiSkenario("contoh-5", "Sleman — skenario hemat", new DateTime(2026, 8, 24), 3300, 710_000 * 12, 6.9, 2620))
+        new(new SimulasiSkenario("contoh-5", "Sleman (skenario hemat)", new DateTime(2026, 8, 24), 3300, 710_000 * 12, 6.9, 2620))
         { Luas = "18 m²", Kapasitas = "2,4 kWp", Keterangan = "Data contoh Figma" }
     };
 }

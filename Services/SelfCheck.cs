@@ -16,7 +16,7 @@ public static class SelfCheck
     public static void Jalankan()
     {
         var lokasi = new Lokasi("Sleman", -7.72, 110.36, luasAtap: 40, orientasi: 0, kemiringan: 15);
-        var panel = new PanelSurya("Contoh 550", 550, 21.3, koefisienSuhu: 0.4, luasPerPanel: 2.6, hargaPerUnit: 2_750_000);
+        PanelSurya panel = new PanelMonokristal("Contoh 550", 550, 21.3, koefisienSuhu: 0.4, luasPerPanel: 2.6, hargaPerUnit: 2_750_000);
         var radiasi = new DataRadiasi(Enumerable.Repeat(4.5, 12).ToList(), 27, "uji", DateTime.Now);
         var tarif = new TarifListrikPLN("R-1/TR 1.300 VA", 1444.70, new DateTime(2025, 1, 1));
 
@@ -33,20 +33,22 @@ public static class SelfCheck
         Debug.Assert(Math.Abs(kalkulator.hitungKoreksiSuhu(27, panel) - 0.892) < 1e-9, "koreksi suhu meleset");
 
         // Koefisien dari datasheet sering negatif; hasilnya harus sama.
-var panelNegatif = new PanelSurya("Negatif", 550, 21.3, koefisienSuhu: -0.4, luasPerPanel: 2.6, hargaPerUnit: 2_750_000);
-Debug.Assert(Math.Abs(kalkulator.hitungKoreksiSuhu(27, panelNegatif) - 0.892) < 1e-9, "koefisien negatif harus diperlakukan sama");
+        var panelNegatif = new PanelMonokristal("Negatif", 550, 21.3, koefisienSuhu: -0.4, luasPerPanel: 2.6, hargaPerUnit: 2_750_000);
+        Debug.Assert(Math.Abs(kalkulator.hitungKoreksiSuhu(27, panelNegatif) - 0.892) < 1e-9, "koefisien negatif harus diperlakukan sama");
 
-// Orientasi: di belahan selatan, atap menghadap utara harus lebih baik daripada menghadap selatan.
-var atapUtara = new Lokasi("U", -7.72, 110.36, 40, orientasi: 0, kemiringan: 15);
-var atapSelatan = new Lokasi("S", -7.72, 110.36, 40, orientasi: 180, kemiringan: 15);
-var atapIdeal = new Lokasi("I", -7.72, 110.36, 40, orientasi: 0, kemiringan: 7.72);
-Debug.Assert(kalkulator.hitungFaktorOrientasi(atapUtara) > kalkulator.hitungFaktorOrientasi(atapSelatan), "utara harus lebih baik dari selatan");
-Debug.Assert(Math.Abs(kalkulator.hitungFaktorOrientasi(atapIdeal) - 1.0) < 1e-9, "posisi ideal harus bernilai 1");
+        // Orientasi: di belahan selatan, atap menghadap utara harus lebih baik daripada menghadap selatan.
+        var atapUtara = new Lokasi("U", -7.72, 110.36, 40, orientasi: 0, kemiringan: 15);
+        var atapSelatan = new Lokasi("S", -7.72, 110.36, 40, orientasi: 180, kemiringan: 15);
+        var atapIdeal = new Lokasi("I", -7.72, 110.36, 40, orientasi: 0, kemiringan: 7.72);
+        Debug.Assert(kalkulator.hitungFaktorOrientasi(atapUtara) > kalkulator.hitungFaktorOrientasi(atapSelatan), "utara harus lebih baik dari selatan");
+        Debug.Assert(Math.Abs(kalkulator.hitungFaktorOrientasi(atapIdeal) - 1.0) < 1e-9, "posisi ideal harus bernilai 1");
 
-// Bulan di luar 1..12 harus ditolak.
-bool ditolak = false;
-try { kalkulator.hitungProduksiBulanan(13); } catch (ArgumentOutOfRangeException) { ditolak = true; }
-Debug.Assert(ditolak, "bulan 13 mestinya ditolak");
+        // Bulan di luar 1..12 harus ditolak.
+        bool ditolak = false;
+        try { kalkulator.hitungProduksiBulanan(13); } catch (ArgumentOutOfRangeException) { ditolak = true; }
+        Debug.Assert(ditolak, "bulan 13 mestinya ditolak");
+
+        CekPolimorfismePanel(kalkulator, panel);
 
         // Produksi wajar untuk PLTS di Indonesia: 1.100-1.600 kWh per kWp per tahun.
         double produksi = kalkulator.hitungProduksiTahunan();
@@ -84,7 +86,38 @@ Debug.Assert(skenario.BiayaInstalasi is { } biayaSkenario && Math.Abs(biayaSkena
 Debug.Assert(skenario.Keuntungan25Tahun > 0, "keuntungan 25 tahun mestinya positif");
 
         CekPenyimpanan(skenario);
+        CekSkemaPenuh();
         CekTampilanRiwayat();
+    }
+
+    /// <summary>
+    /// Satu panggilan method yang sama (hitungKoreksiSuhu) harus memberi hasil berbeda
+    /// sesuai jenis panel yang sedang dipegang: itu polimorfisme yang dipakai kalkulator.
+    /// </summary>
+    private static void CekPolimorfismePanel(KalkulatorEnergi kalkulator, PanelSurya mono)
+    {
+        PanelSurya thinFilm = new PanelThinFilm("Contoh TF 550", 550, 21.3, koefisienSuhu: 0.4,
+                                                luasPerPanel: 2.6, hargaPerUnit: 2_750_000);
+
+        Debug.Assert(mono.Jenis == "Monokristalin" && thinFilm.Jenis == "Thin film (a-Si)",
+            "jenis panel harus dijawab masing-masing turunan");
+
+        // Spesifikasi identik, hanya teknologi selnya beda: thin film menahan panas lebih baik.
+        double koreksiMono = kalkulator.hitungKoreksiSuhu(27, mono);
+        double koreksiThin = kalkulator.hitungKoreksiSuhu(27, thinFilm);
+        Debug.Assert(koreksiThin > koreksiMono,
+            $"thin film mestinya lebih tahan panas: mono {koreksiMono}, thin film {koreksiThin}");
+
+        // Sel 52 C -> annealing (52 - 40) x 0,1% = 1,2% di atas rumus kristalin 0,892.
+        Debug.Assert(Math.Abs(koreksiThin - 0.904) < 1e-9, $"koreksi thin film meleset: {koreksiThin}");
+
+        // Di bawah suhu annealing kedua panel kembali sama.
+        Debug.Assert(mono.hitungKoreksiSuhu(35).Equals(thinFilm.hitungKoreksiSuhu(35)),
+            "di bawah 40 C thin film harus memakai rumus warisan dari class dasar");
+
+        // Method bukan-virtual tetap diwarisi apa adanya oleh kedua turunan.
+        Debug.Assert(thinFilm.hitungJumlahPanel(30) == mono.hitungJumlahPanel(30),
+            "hitungJumlahPanel diwarisi, tidak boleh beda");
     }
 
     private static void CekTampilanRiwayat()
@@ -93,7 +126,7 @@ Debug.Assert(skenario.Keuntungan25Tahun > 0, "keuntungan 25 tahun mestinya posit
             5847, 14_880_000, double.PositiveInfinity, 5100));
         Debug.Assert(baris.Hemat == "Rp 1.240.000", "riwayat harus mengubah penghematan tahunan ke bulanan");
         Debug.Assert(baris.Payback == "Tidak balik modal", "payback tak hingga harus terbaca di riwayat");
-        Debug.Assert(baris.Luas == "—" && baris.Kapasitas == "—" && baris.Untung == "—",
+        Debug.Assert(baris.Luas == "-" && baris.Kapasitas == "-" && baris.Untung == "-",
             "detail yang belum tersimpan tidak boleh ditebak");
         int perubahan = 0;
         baris.PropertyChanged += (_, _) => perubahan++;
@@ -103,6 +136,77 @@ Debug.Assert(skenario.Keuntungan25Tahun > 0, "keuntungan 25 tahun mestinya posit
         Debug.Assert(perubahan == 2, "checkbox riwayat harus memperbarui pilihan hanya saat nilainya berubah");
     }
 
+    private static long Hitung(Microsoft.Data.Sqlite.SqliteConnection db, string sql)
+    {
+        using var cmd = db.CreateCommand();
+        cmd.CommandText = sql;
+        return Convert.ToInt64(cmd.ExecuteScalar());
+    }
+
+    private static void PeriksaSkema(RepositoriSimulasi repo, string label)
+    {
+        using var db = repo.BukaKoneksi();
+        Debug.Assert(Hitung(db, "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name IN " +
+            "('lokasi','panel_surya','tarif_listrik_pln','data_radiasi','radiasi_bulanan','skenario')") == 6,
+            $"{label}: enam tabel ERD harus ada");
+        Debug.Assert(Hitung(db, "SELECT COUNT(*) FROM pragma_table_info('skenario') WHERE name IN " +
+            "('lokasi_id','panel_id','tarif_id','data_radiasi_id','biaya_per_wp','degradasi_tahunan'," +
+            "'faktor_emisi_co2','jumlah_panel','kapasitas_wp')") == 9,
+            $"{label}: sembilan kolom tambahan skenario harus ada");
+        Debug.Assert(Hitung(db, "PRAGMA foreign_keys;") == 1, $"{label}: foreign key harus menyala di setiap koneksi");
+    }
+
+    private static void CekSkemaPenuh()
+    {
+        string lama = Path.Combine(Path.GetTempPath(), $"suncost-skema-lama-{Guid.NewGuid():N}.db");
+        string baru = Path.Combine(Path.GetTempPath(), $"suncost-skema-baru-{Guid.NewGuid():N}.db");
+        try
+        {
+            // Database versi lama: hanya tujuh kolom hasil dan satu baris data.
+            using (var db = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={lama}"))
+            {
+                db.Open();
+                using var cmd = db.CreateCommand();
+                cmd.CommandText = """
+                    CREATE TABLE skenario (id TEXT PRIMARY KEY, nama TEXT NOT NULL, tanggal TEXT NOT NULL,
+                        produksi_tahunan REAL NOT NULL, penghematan_tahunan REAL NOT NULL,
+                        payback_period REAL NOT NULL, emisi_dihindari REAL NOT NULL);
+                    INSERT INTO skenario VALUES ('lama', 'Skenario lama', '2026-01-01T00:00:00.0000000', 5000, 7000000, 8.5, 4000);
+                    """;
+                cmd.ExecuteNonQuery();
+            }
+
+            var repoLama = new RepositoriSimulasi(lama);
+            PeriksaSkema(repoLama, "database lama");
+            var riwayat = repoLama.ambilSemua();
+            Debug.Assert(riwayat.Count == 1 && riwayat[0].Nama == "Skenario lama" && riwayat[0].ProduksiTahunan == 5000,
+                "riwayat lama harus tetap terbaca setelah migrasi");
+            _ = new RepositoriSimulasi(lama);   // migrasi kedua tidak boleh melempar pengecualian
+
+            // Database baru langsung memakai skema penuh.
+            PeriksaSkema(new RepositoriSimulasi(baru), "database baru");
+
+            // Foreign key benar-benar ditegakkan.
+            using var uji = repoLama.BukaKoneksi();
+            bool ditolak = false;
+            try
+            {
+                using var cmd = uji.CreateCommand();
+                cmd.CommandText = "INSERT INTO skenario (id, nama, tanggal, produksi_tahunan, penghematan_tahunan, " +
+                                  "payback_period, emisi_dihindari, lokasi_id) " +
+                                  "VALUES ('x', 'x', '2026-01-01', 1, 1, 1, 1, 'lokasi-tidak-ada');";
+                cmd.ExecuteNonQuery();
+            }
+            catch (Microsoft.Data.Sqlite.SqliteException) { ditolak = true; }
+            Debug.Assert(ditolak, "skenario dengan lokasi_id yang tidak ada harus ditolak foreign key");
+        }
+        finally
+        {
+            Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+            if (File.Exists(lama)) File.Delete(lama);
+            if (File.Exists(baru)) File.Delete(baru);
+        }
+    }
     private static void CekPenyimpanan(SimulasiSkenario s)
     {
         string berkas = Path.Combine(Path.GetTempPath(), $"suncost-selfcheck-{Guid.NewGuid():N}.db");
