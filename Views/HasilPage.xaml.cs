@@ -29,6 +29,12 @@ public partial class HasilPage : UserControl
     public HasilPage()
     {
         InitializeComponent();
+        SkeletonAsumsi.ItemsSource = new[]
+        {
+            "Peak Sun Hours (PSH)",
+            "Performance Ratio (PR)",
+            "Koreksi suhu"
+        };
         TampilkanMemuat();
     }
 
@@ -70,6 +76,9 @@ public partial class HasilPage : UserControl
         RataBulanan.Visibility = angka;
         SetaraKonsumsi.Visibility = angka;
         TabFinansial.IsEnabled = !memuat;
+
+        SkeletonAsumsi.Visibility = skeleton;
+        Asumsi.Visibility = memuat ? Visibility.Collapsed : Visibility.Visible;
     }
 
     public void TampilkanHasil(SimulasiSkenario skenario, bool dataCadangan)

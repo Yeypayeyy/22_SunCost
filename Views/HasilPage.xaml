@@ -139,6 +139,19 @@
                         </StackPanel>
                     </Border>
 
+                    <ItemsControl x:Name="SkeletonAsumsi" Visibility="Collapsed">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <DockPanel Margin="0,14,0,0">
+                                    <Border DockPanel.Dock="Right" Width="72" Height="12"
+                CornerRadius="4" Background="{StaticResource TrackBrush}"
+                VerticalAlignment="Center"/>
+                                    <TextBlock Text="{Binding}" FontSize="12"
+                   Foreground="{StaticResource InkBrush}"/>
+                                </DockPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
                     <ItemsControl x:Name="Asumsi">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
