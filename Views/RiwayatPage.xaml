@@ -36,8 +36,11 @@
       <Setter Property="Margin" Value="0,3,0,0"/>
     </Style>
   </UserControl.Resources>
-  <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-    <StackPanel Margin="40,36">
+    <Grid>
+        <ScrollViewer x:Name="KontenRiwayat"
+                VerticalScrollBarVisibility="Auto"
+                HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Margin="40,36">
       <DockPanel>
         <Button x:Name="Bandingkan" DockPanel.Dock="Right" Content="Bandingkan (0)"
                 FontSize="13" Padding="20,11"
@@ -117,6 +120,21 @@
               </DataGridTextColumn.ElementStyle>
             </DataGridTextColumn>
             <DataGridTextColumn Header="Tanggal" Binding="{Binding Tanggal}" Width="1.2*" MinWidth="105" IsReadOnly="True"/>
+              <DataGridTemplateColumn Header="Aksi" Width="72" IsReadOnly="True">
+                <DataGridTemplateColumn.CellTemplate>
+                    <DataTemplate>
+                        <Button Width="34" Height="30"
+                                Background="Transparent" BorderThickness="0"
+                                Foreground="{StaticResource DangerBrush}"
+                                IsEnabled="{Binding BisaDihapus}"
+                                Click="MintaHapus_Click"
+                                ToolTip="Hapus skenario"
+                                AutomationProperties.Name="Hapus skenario">
+                            <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE74D;"/>
+                        </Button>
+                    </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
           </DataGrid.Columns>
         </DataGrid>
       </Border>
@@ -178,5 +196,32 @@
         </ItemsControl>
       </StackPanel>
     </StackPanel>
-  </ScrollViewer>
+        </ScrollViewer>
+
+        <Grid x:Name="OverlayHapus" Background="#61000000"
+        Visibility="Collapsed"
+        KeyboardNavigation.TabNavigation="Cycle"
+        PreviewKeyDown="OverlayHapus_KeyDown">
+            <Border Width="420" Padding="24"
+            HorizontalAlignment="Center" VerticalAlignment="Center"
+            Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Text="Hapus skenario?" FontSize="17" FontWeight="SemiBold"
+                   Foreground="{StaticResource InkBrush}"/>
+                    <TextBlock x:Name="PesanHapus" Margin="0,12,0,0"
+                   TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}"/>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
+                    Margin="0,20,0,0">
+                        <Button x:Name="BatalHapus" Content="Batal" MinWidth="76"
+                  Style="{StaticResource SecondaryButton}"
+                  Click="BatalHapus_Click"/>
+                        <Button Content="Hapus" MinWidth="76" Margin="8,0,0,0"
+                  Style="{StaticResource DangerButton}"
+                  Click="KonfirmasiHapus_Click"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
 </UserControl>

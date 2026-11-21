@@ -8,6 +8,7 @@ using System.Windows.Controls;
 using Microsoft.Data.Sqlite;
 using SunCost.Models;
 using SunCost.Services;
+using System.Windows.Input;
 
 namespace SunCost.Views;
 
@@ -17,6 +18,8 @@ public partial class RiwayatPage : UserControl
     {
         public SimulasiSkenario Skenario { get; }
         public string Nama => Skenario.Nama;
+        public bool BisaDihapus =>
+            !Skenario.Id.StartsWith("contoh-", StringComparison.Ordinal);
         public string Luas { get; init; } = "-";
         public string Kapasitas { get; init; } = "-";
         public string Judul { get; init; }
@@ -77,6 +80,75 @@ public partial class RiwayatPage : UserControl
         {
             Status.Text = "Riwayat tidak dapat dimuat. Periksa akses dan berkas penyimpanan lokal, lalu buka kembali halaman ini.";
             Petunjuk.Text = "Data tersimpan tidak diubah.";
+        }
+    }
+
+    private Baris? targetHapus;
+    private Button? tombolPemicuHapus;
+
+    private void MintaHapus_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button tombol || tombol.DataContext is not Baris baris ||
+            !baris.BisaDihapus)
+            return;
+
+        targetHapus = baris;
+        tombolPemicuHapus = tombol;
+        PesanHapus.Text = $"Skenario “{baris.Nama}” akan dihapus. " +
+                          "Tindakan ini tidak dapat dibatalkan.";
+
+        KontenRiwayat.IsEnabled = false;
+        OverlayHapus.Visibility = Visibility.Visible;
+        BatalHapus.Focus();
+    }
+
+    private void TutupKonfirmasiHapus()
+    {
+        targetHapus = null;
+        OverlayHapus.Visibility = Visibility.Collapsed;
+        KontenRiwayat.IsEnabled = true;
+        tombolPemicuHapus?.Focus();
+        tombolPemicuHapus = null;
+    }
+
+    private void BatalHapus_Click(object sender, RoutedEventArgs e) =>
+        TutupKonfirmasiHapus();
+
+    private void OverlayHapus_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Escape)
+            return;
+
+        e.Handled = true;
+        TutupKonfirmasiHapus();
+    }
+
+    private void KonfirmasiHapus_Click(object sender, RoutedEventArgs e)
+    {
+        if (targetHapus is not { } baris)
+            return;
+
+        TutupKonfirmasiHapus();
+
+        try
+        {
+            var riwayat = new RiwayatSimulasi(new RepositoriSimulasi());
+            bool terhapus = riwayat.hapusSkenario(baris.Skenario.Id);
+
+            daftar.Remove(baris);
+            Tabel.ItemsSource = daftar.ToArray();
+            KartuPerbandingan.ItemsSource = null;
+            BagianPerbandingan.Visibility = Visibility.Collapsed;
+            PerbaruiPilihan();
+
+            Status.Text = terhapus
+                ? $"Skenario “{baris.Nama}” berhasil dihapus."
+                : $"Skenario “{baris.Nama}” sudah tidak ada di penyimpanan.";
+        }
+        catch (Exception ex) when (
+            ex is SqliteException or IOException or UnauthorizedAccessException)
+        {
+            Status.Text = "Skenario gagal dihapus. Periksa akses penyimpanan lokal.";
         }
     }
 
