@@ -10,6 +10,25 @@ dikerjakan bersamaan tanpa konflik merge.
 
 Acuan desain: [docs/specs/layar-ui.md](../specs/layar-ui.md).
 
+## Status
+
+| Tugas | Status | Catatan |
+|---|---|---|
+| A1–A7 (Farrel) | ✅ di `main` | |
+| B1 · HasilPage terima skenario | ✅ di `main` | |
+| B2 · Tab Finansial & Lingkungan | tata letak ✅ | Angka menunggu **BE-7** |
+| B3 · State memuat | ✅ di `main` | |
+| B4 · State data cadangan | ✅ di `main` | |
+| B5 · Hapus skenario | ✅ di `main` | |
+| B6 · Riwayat kosong | ✅ di `main` | |
+
+**Tindak lanjut Farrel yang sekarang sudah bisa dikerjakan:** karena B1 sudah ada, ganti
+`Buka(2)` di `SimulasiPage.xaml.cs` (ditandai `ponytail:`) dengan
+`Buka(new HasilPage(skenario))`, supaya tombol Hitung membuka halaman Hasil, bukan Riwayat.
+
+Basis data tetap SQLite ([ADR 0002](../decisions/0002-database-sqlite.md)). Kode PostgreSQL dari
+branch `538308` sudah dikeluarkan saat branch itu dirapikan, dan tidak perlu ditambahkan lagi.
+
 ## Pembagian kepemilikan berkas
 
 Hanya pemilik yang boleh mengubah berkas di kolomnya.
