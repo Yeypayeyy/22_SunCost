@@ -116,6 +116,7 @@ Debug.Assert(skenario.Keuntungan25Tahun > 0, "keuntungan 25 tahun mestinya posit
 
         CekPenyimpanan(skenario);
         CekSkemaPenuh();
+        CekDataAwal();
         CekTampilanRiwayat();
     }
 
@@ -234,6 +235,64 @@ Debug.Assert(skenario.Keuntungan25Tahun > 0, "keuntungan 25 tahun mestinya posit
             Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
             if (File.Exists(lama)) File.Delete(lama);
             if (File.Exists(baru)) File.Delete(baru);
+        }
+    }
+
+        private static void CekDataAwal()
+    {
+        string baru = Path.Combine(Path.GetTempPath(), $"suncost-awal-baru-{Guid.NewGuid():N}.db");
+        string lama = Path.Combine(Path.GetTempPath(), $"suncost-awal-lama-{Guid.NewGuid():N}.db");
+        try
+        {
+            // Database baru langsung berisi data master.
+            var repo = new RepositoriSimulasi(baru);
+            using (var db = repo.BukaKoneksi())
+            {
+                Debug.Assert(Hitung(db, "SELECT COUNT(*) FROM panel_surya") == 3, "database baru harus punya 3 panel");
+                Debug.Assert(Hitung(db, "SELECT COUNT(*) FROM panel_surya WHERE jenis = 'monokristalin'") >= 1, "butuh minimal satu panel monokristalin");
+                Debug.Assert(Hitung(db, "SELECT COUNT(*) FROM panel_surya WHERE jenis = 'thin_film'") >= 1, "butuh minimal satu panel thin film");
+                Debug.Assert(Hitung(db, "SELECT COUNT(*) FROM tarif_listrik_pln") == 4, "database baru harus punya 4 golongan tarif");
+                Debug.Assert(Hitung(db, "SELECT COUNT(*) FROM tarif_listrik_pln WHERE golongan LIKE 'R-1/TR 1.300 VA%' AND tarif_per_kwh = 1444.70") == 1,
+                    "tarif R-1/1300 VA harus Rp1.444,70");
+            }
+
+            // Dibuka berulang kali tidak menggandakan baris.
+            _ = new RepositoriSimulasi(baru);
+            using (var db = repo.BukaKoneksi())
+            {
+                Debug.Assert(Hitung(db, "SELECT COUNT(*) FROM panel_surya") == 3, "panel tergandakan saat database dibuka ulang");
+                Debug.Assert(Hitung(db, "SELECT COUNT(*) FROM tarif_listrik_pln") == 4, "tarif tergandakan saat database dibuka ulang");
+            }
+
+            // Database dari BE-1 (panel_surya belum punya kolom jenis) dan berisi data pengguna.
+            using (var db = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={lama}"))
+            {
+                db.Open();
+                using var cmd = db.CreateCommand();
+                cmd.CommandText = """
+                    CREATE TABLE panel_surya (id TEXT PRIMARY KEY, merk TEXT NOT NULL,
+                        kapasitas_wp REAL NOT NULL CHECK (kapasitas_wp > 0), efisiensi REAL NOT NULL,
+                        koefisien_suhu REAL NOT NULL, luas_per_panel REAL NOT NULL CHECK (luas_per_panel > 0),
+                        harga_per_unit REAL NOT NULL);
+                    INSERT INTO panel_surya VALUES ('panel-mono-420', 'Punyaku', 400, 20, 0.3, 2, 1000000);
+                    """;
+                cmd.ExecuteNonQuery();
+            }
+            var repoLama = new RepositoriSimulasi(lama);
+            using (var db = repoLama.BukaKoneksi())
+            {
+                Debug.Assert(Hitung(db, "SELECT COUNT(*) FROM pragma_table_info('panel_surya') WHERE name = 'jenis'") == 1,
+                    "kolom jenis harus ditambahkan ke database lama");
+                Debug.Assert(Hitung(db, "SELECT COUNT(*) FROM panel_surya WHERE id = 'panel-mono-420' AND merk = 'Punyaku'") == 1,
+                    "data pengguna tidak boleh ditimpa data awal");
+                Debug.Assert(Hitung(db, "SELECT COUNT(*) FROM panel_surya") == 3, "database lama harus tetap berisi 3 panel");
+            }
+        }
+        finally
+        {
+            Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+            if (File.Exists(baru)) File.Delete(baru);
+            if (File.Exists(lama)) File.Delete(lama);
         }
     }
     private static void CekPenyimpanan(SimulasiSkenario s)
