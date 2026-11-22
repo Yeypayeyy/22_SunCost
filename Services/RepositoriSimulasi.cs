@@ -10,6 +10,91 @@ namespace SunCost.Services;
 /// <summary>Menyimpan skenario simulasi pada satu berkas SQLite di folder data aplikasi pengguna.</summary>
 public class RepositoriSimulasi
 {
+    // Skema penuh sesuai docs/ERD.md. Urutan: tabel yang dirujuk FK dibuat lebih dulu.
+    // Kolom tambahan pada skenario sengaja boleh NULL (berbeda dari DDL di ERD): SQLite tidak bisa
+    // menambah kolom NOT NULL ke tabel yang sudah berisi, dan baris lama tidak punya nilainya.
+    // BE-2 yang mengisi kolom-kolom itu.
+    private const string Skema = """
+        CREATE TABLE IF NOT EXISTS lokasi (
+            id          TEXT PRIMARY KEY,
+            nama        TEXT NOT NULL,
+            latitude    REAL NOT NULL CHECK (latitude BETWEEN -90 AND 90),
+            longitude   REAL NOT NULL CHECK (longitude BETWEEN -180 AND 180),
+            luas_atap   REAL NOT NULL CHECK (luas_atap > 0),
+            orientasi   REAL NOT NULL CHECK (orientasi >= 0 AND orientasi < 360),
+            kemiringan  REAL NOT NULL CHECK (kemiringan BETWEEN 0 AND 90)
+        );
+
+        CREATE TABLE IF NOT EXISTS panel_surya (
+            id              TEXT PRIMARY KEY,
+            merk            TEXT NOT NULL,
+            kapasitas_wp    REAL NOT NULL CHECK (kapasitas_wp > 0),
+            efisiensi       REAL NOT NULL,
+            koefisien_suhu  REAL NOT NULL,
+            luas_per_panel  REAL NOT NULL CHECK (luas_per_panel > 0),
+            harga_per_unit  REAL NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS tarif_listrik_pln (
+            id              TEXT PRIMARY KEY,
+            golongan        TEXT NOT NULL,
+            tarif_per_kwh   REAL NOT NULL CHECK (tarif_per_kwh > 0),
+            tanggal_berlaku TEXT NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS data_radiasi (
+            id                     TEXT PRIMARY KEY,
+            lokasi_id              TEXT NOT NULL REFERENCES lokasi(id) ON DELETE CASCADE,
+            peak_sun_hours_tahunan REAL NOT NULL,
+            suhu_rata_rata         REAL NOT NULL,
+            sumber_data            TEXT NOT NULL,
+            tanggal_ambil          TEXT NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS radiasi_bulanan (
+            data_radiasi_id TEXT NOT NULL REFERENCES data_radiasi(id) ON DELETE CASCADE,
+            bulan           INTEGER NOT NULL CHECK (bulan BETWEEN 1 AND 12),
+            peak_sun_hours  REAL NOT NULL,
+            PRIMARY KEY (data_radiasi_id, bulan)
+        );
+
+        CREATE TABLE IF NOT EXISTS skenario (
+            id                  TEXT PRIMARY KEY,
+            nama                TEXT NOT NULL,
+            tanggal             TEXT NOT NULL,
+            lokasi_id           TEXT REFERENCES lokasi(id),
+            panel_id            TEXT REFERENCES panel_surya(id),
+            tarif_id            TEXT REFERENCES tarif_listrik_pln(id),
+            data_radiasi_id     TEXT REFERENCES data_radiasi(id),
+            biaya_per_wp        REAL,
+            degradasi_tahunan   REAL,
+            faktor_emisi_co2    REAL,
+            jumlah_panel        INTEGER,
+            kapasitas_wp        REAL,
+            produksi_tahunan    REAL NOT NULL,
+            penghematan_tahunan REAL NOT NULL,
+            payback_period      REAL NOT NULL,
+            emisi_dihindari     REAL NOT NULL
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_skenario_tanggal ON skenario(tanggal DESC);
+        """;
+
+    // Kolom yang tidak ada pada database versi lama. Nama dan tipe ditulis tetap di sini
+    // (bukan input pengguna), jadi aman dipakai langsung dalam ALTER TABLE.
+    private static readonly (string Nama, string Tipe)[] KolomTambahanSkenario =
+    {
+        ("lokasi_id", "TEXT REFERENCES lokasi(id)"),
+        ("panel_id", "TEXT REFERENCES panel_surya(id)"),
+        ("tarif_id", "TEXT REFERENCES tarif_listrik_pln(id)"),
+        ("data_radiasi_id", "TEXT REFERENCES data_radiasi(id)"),
+        ("biaya_per_wp", "REAL"),
+        ("degradasi_tahunan", "REAL"),
+        ("faktor_emisi_co2", "REAL"),
+        ("jumlah_panel", "INTEGER"),
+        ("kapasitas_wp", "REAL"),
+    };
+
     private string connectionString;
 
     public RepositoriSimulasi(string? berkasDb = null)
@@ -20,27 +105,52 @@ public class RepositoriSimulasi
         Directory.CreateDirectory(Path.GetDirectoryName(berkasDb)!);
         connectionString = new SqliteConnectionStringBuilder { DataSource = berkasDb }.ToString();
 
-        using var db = new SqliteConnection(connectionString);
+        using var db = BukaKoneksi();
+        using (var cmd = db.CreateCommand())
+        {
+            cmd.CommandText = Skema;
+            cmd.ExecuteNonQuery();
+        }
+        TambahKolomYangBelumAda(db);
+    }
+
+    /// <summary>
+    /// Membuka koneksi dengan foreign key menyala. SQLite mematikannya secara bawaan dan
+    /// pengaturannya berlaku per koneksi, jadi harus dijalankan pada setiap koneksi yang dibuka.
+    /// </summary>
+    internal SqliteConnection BukaKoneksi()
+    {
+        var db = new SqliteConnection(connectionString);
         db.Open();
         using var cmd = db.CreateCommand();
-        cmd.CommandText = """
-            CREATE TABLE IF NOT EXISTS skenario (
-                id                  TEXT PRIMARY KEY,
-                nama                TEXT NOT NULL,
-                tanggal             TEXT NOT NULL,
-                produksi_tahunan    REAL NOT NULL,
-                penghematan_tahunan REAL NOT NULL,
-                payback_period      REAL NOT NULL,
-                emisi_dihindari     REAL NOT NULL
-            );
-            """;
+        cmd.CommandText = "PRAGMA foreign_keys = ON;";
         cmd.ExecuteNonQuery();
+        return db;
+    }
+
+    /// <summary>Menambah kolom skenario yang belum ada. Aman dijalankan berulang dan tidak menyentuh data lama.</summary>
+    private static void TambahKolomYangBelumAda(SqliteConnection db)
+    {
+        var ada = new HashSet<string>();
+        using (var cmd = db.CreateCommand())
+        {
+            cmd.CommandText = "PRAGMA table_info(skenario);";
+            using var baca = cmd.ExecuteReader();
+            while (baca.Read()) ada.Add(baca.GetString(1));
+        }
+
+        foreach (var (nama, tipe) in KolomTambahanSkenario)
+        {
+            if (ada.Contains(nama)) continue;
+            using var alter = db.CreateCommand();
+            alter.CommandText = $"ALTER TABLE skenario ADD COLUMN {nama} {tipe};";
+            alter.ExecuteNonQuery();
+        }
     }
 
     public bool simpan(SimulasiSkenario s)
     {
-        using var db = new SqliteConnection(connectionString);
-        db.Open();
+        using var db = BukaKoneksi();
         using var cmd = db.CreateCommand();
         cmd.CommandText = """
             INSERT OR REPLACE INTO skenario
@@ -61,8 +171,7 @@ public class RepositoriSimulasi
     {
         var daftar = new List<SimulasiSkenario>();
 
-        using var db = new SqliteConnection(connectionString);
-        db.Open();
+        using var db = BukaKoneksi();
         using var cmd = db.CreateCommand();
         cmd.CommandText = """
             SELECT id, nama, tanggal, produksi_tahunan, penghematan_tahunan, payback_period, emisi_dihindari
@@ -83,13 +192,12 @@ public class RepositoriSimulasi
         return daftar;
     }
 
-    // ponytail: memindai seluruh riwayat; ganti ke query WHERE id kalau riwayat mencapai ribuan baris.
+    // ponytail: memindai seluruh riwayat; BE-2 menggantinya dengan query WHERE id = $id.
     public SimulasiSkenario? ambilById(string id) => ambilSemua().Find(s => s.Id == id);
 
     public bool hapus(string id)
     {
-        using var db = new SqliteConnection(connectionString);
-        db.Open();
+        using var db = BukaKoneksi();
         using var cmd = db.CreateCommand();
         cmd.CommandText = "DELETE FROM skenario WHERE id = $id;";
         cmd.Parameters.AddWithValue("$id", id);

@@ -8,6 +8,7 @@ using System.Windows.Controls;
 using Microsoft.Data.Sqlite;
 using SunCost.Models;
 using SunCost.Services;
+using System.Windows.Input;
 
 namespace SunCost.Views;
 
@@ -54,29 +55,108 @@ public partial class RiwayatPage : UserControl
     public RiwayatPage()
     {
         InitializeComponent();
+
         try
         {
-            var riwayat = new RiwayatSimulasi(new RepositoriSimulasi()).muatRiwayat();
-            daftar = riwayat.Select(s => new Baris(s)).ToList();
-            if (daftar.Count == 0)
-            {
-                daftar = Contoh();
-                Status.Text = "Belum ada riwayat tersimpan. Menampilkan data contoh Figma; contoh ini tidak disimpan.";
-                daftar[0].Dipilih = daftar[1].Dipilih = true;
-            }
-            else
-            {
-                // shortcut: riwayat lama tidak menyimpan detail atap dan proyeksi, tampilkan setelah data tersebut dipersistenkan.
-                Status.Text = "Luas atap, kapasitas, dan keuntungan 25 tahun belum tersedia pada data riwayat tersimpan (-).";
-            }
-            Tabel.ItemsSource = daftar;
-            PerbaruiPilihan();
-            if (daftar.Count(s => s.Dipilih) >= 2) TampilkanPerbandingan();
+            var riwayat = new RiwayatSimulasi(new RepositoriSimulasi());
+            daftar = riwayat.muatRiwayat().Select(s => new Baris(s)).ToList();
+            Tabel.ItemsSource = daftar.ToArray();
+
+            Status.Text = daftar.Count == 0
+                ? ""
+                : "Luas atap, kapasitas, dan keuntungan 25 tahun belum tersedia pada data riwayat tersimpan (-).";
+
+            PerbaruiKeadaanRiwayat();
         }
-        catch (Exception ex) when (ex is SqliteException or IOException or UnauthorizedAccessException or FormatException)
+        catch (Exception ex) when (
+            ex is SqliteException or IOException or UnauthorizedAccessException or FormatException)
         {
-            Status.Text = "Riwayat tidak dapat dimuat. Periksa akses dan berkas penyimpanan lokal, lalu buka kembali halaman ini.";
-            Petunjuk.Text = "Data tersimpan tidak diubah.";
+            KartuTabel.Visibility = Visibility.Collapsed;
+            Petunjuk.Visibility = Visibility.Collapsed;
+            Status.Text = "Riwayat tidak dapat dimuat. Periksa akses penyimpanan lokal.";
+        }
+    }
+
+    private void PerbaruiKeadaanRiwayat()
+    {
+        bool kosong = daftar.Count == 0;
+        KartuKosong.Visibility = kosong ? Visibility.Visible : Visibility.Collapsed;
+        KartuTabel.Visibility = kosong ? Visibility.Collapsed : Visibility.Visible;
+        Petunjuk.Visibility = kosong ? Visibility.Collapsed : Visibility.Visible;
+        PerbaruiPilihan();
+    }
+
+    private void MulaiSimulasi_Click(object sender, RoutedEventArgs e)
+    {
+        if (Window.GetWindow(this) is MainWindow jendela)
+            jendela.Buka(1);
+    }
+
+    private Baris? targetHapus;
+    private Button? tombolPemicuHapus;
+
+    private void MintaHapus_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button tombol || tombol.DataContext is not Baris baris)
+            return;
+
+        targetHapus = baris;
+        tombolPemicuHapus = tombol;
+        PesanHapus.Text = $"Skenario “{baris.Nama}” akan dihapus. " +
+                          "Tindakan ini tidak dapat dibatalkan.";
+
+        KontenRiwayat.IsEnabled = false;
+        OverlayHapus.Visibility = Visibility.Visible;
+        BatalHapus.Focus();
+    }
+
+    private void TutupKonfirmasiHapus()
+    {
+        targetHapus = null;
+        OverlayHapus.Visibility = Visibility.Collapsed;
+        KontenRiwayat.IsEnabled = true;
+        tombolPemicuHapus?.Focus();
+        tombolPemicuHapus = null;
+    }
+
+    private void BatalHapus_Click(object sender, RoutedEventArgs e) =>
+        TutupKonfirmasiHapus();
+
+    private void OverlayHapus_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Escape)
+            return;
+
+        e.Handled = true;
+        TutupKonfirmasiHapus();
+    }
+
+    private void KonfirmasiHapus_Click(object sender, RoutedEventArgs e)
+    {
+        if (targetHapus is not { } baris)
+            return;
+
+        TutupKonfirmasiHapus();
+
+        try
+        {
+            var riwayat = new RiwayatSimulasi(new RepositoriSimulasi());
+            bool terhapus = riwayat.hapusSkenario(baris.Skenario.Id);
+
+            daftar.Remove(baris);
+            Tabel.ItemsSource = daftar.ToArray();
+            KartuPerbandingan.ItemsSource = null;
+            BagianPerbandingan.Visibility = Visibility.Collapsed;
+            PerbaruiKeadaanRiwayat();
+
+            Status.Text = terhapus
+                ? $"Skenario “{baris.Nama}” berhasil dihapus."
+                : $"Skenario “{baris.Nama}” sudah tidak ada di penyimpanan.";
+        }
+        catch (Exception ex) when (
+            ex is SqliteException or IOException or UnauthorizedAccessException)
+        {
+            Status.Text = "Skenario gagal dihapus. Periksa akses penyimpanan lokal.";
         }
     }
 
@@ -116,24 +196,4 @@ public partial class RiwayatPage : UserControl
         BagianPerbandingan.Visibility = Visibility.Visible;
         Petunjuk.Text = "Penanda menunjukkan periode balik modal tercepat di antara skenario yang dipilih.";
     }
-
-    private static List<Baris> Contoh() => new()
-    {
-        new(new SimulasiSkenario("contoh-1", "Sleman, DIY", new DateTime(2026, 9, 6), 5847, 1_240_000 * 12, 6.3, 5100))
-        {
-            Luas = "32 m²", Kapasitas = "4,2 kWp", Judul = "Atap menghadap utara",
-            Keterangan = "Orientasi 0° · kemiringan 15°", Untung = "Rp 261.000.000"
-        },
-        new(new SimulasiSkenario("contoh-2", "Sleman, DIY (atap barat)", new DateTime(2026, 9, 6), 4738, 1_005_000 * 12, 7.8, 4122))
-        {
-            Luas = "32 m²", Kapasitas = "4,2 kWp", Judul = "Atap menghadap barat",
-            Keterangan = "Orientasi 270° · kemiringan 15°", Untung = "Rp 199.000.000"
-        },
-        new(new SimulasiSkenario("contoh-3", "Bantul, DIY", new DateTime(2026, 9, 2), 4300, 880_000 * 12, 7.1, 3414))
-        { Luas = "24 m²", Kapasitas = "3,0 kWp", Keterangan = "Data contoh Figma" },
-        new(new SimulasiSkenario("contoh-4", "Depok, Jawa Barat", new DateTime(2026, 8, 28), 7900, 1_610_000 * 12, 5.8, 6272))
-        { Luas = "42 m²", Kapasitas = "5,5 kWp", Keterangan = "Data contoh Figma" },
-        new(new SimulasiSkenario("contoh-5", "Sleman (skenario hemat)", new DateTime(2026, 8, 24), 3300, 710_000 * 12, 6.9, 2620))
-        { Luas = "18 m²", Kapasitas = "2,4 kWp", Keterangan = "Data contoh Figma" }
-    };
 }

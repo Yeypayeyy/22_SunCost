@@ -36,8 +36,11 @@
       <Setter Property="Margin" Value="0,3,0,0"/>
     </Style>
   </UserControl.Resources>
-  <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-    <StackPanel Margin="40,36">
+    <Grid>
+        <ScrollViewer x:Name="KontenRiwayat"
+                VerticalScrollBarVisibility="Auto"
+                HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Margin="40,36">
       <DockPanel>
         <Button x:Name="Bandingkan" DockPanel.Dock="Right" Content="Bandingkan (0)"
                 FontSize="13" Padding="20,11"
@@ -59,8 +62,9 @@
       </DockPanel>
       <TextBlock x:Name="Status" FontSize="12" Foreground="{StaticResource MutedBrush}"
                  Margin="0,12,0,0" TextWrapping="Wrap"/>
-      <Border Style="{StaticResource Card}" Margin="0,16,0,0" ClipToBounds="True">
-        <DataGrid x:Name="Tabel" AutoGenerateColumns="False" CanUserAddRows="False"
+                <Border x:Name="KartuTabel" Style="{StaticResource Card}"
+        Margin="0,16,0,0" ClipToBounds="True">
+                    <DataGrid x:Name="Tabel" AutoGenerateColumns="False" CanUserAddRows="False"
                   CanUserDeleteRows="False" CanUserReorderColumns="False" CanUserSortColumns="False"
                   HeadersVisibility="Column" RowHeaderWidth="0" GridLinesVisibility="Horizontal"
                   HorizontalGridLinesBrush="{StaticResource BorderBrush}" BorderThickness="0"
@@ -117,10 +121,47 @@
               </DataGridTextColumn.ElementStyle>
             </DataGridTextColumn>
             <DataGridTextColumn Header="Tanggal" Binding="{Binding Tanggal}" Width="1.2*" MinWidth="105" IsReadOnly="True"/>
+              <DataGridTemplateColumn Header="Aksi" Width="72" IsReadOnly="True">
+                <DataGridTemplateColumn.CellTemplate>
+                    <DataTemplate>
+                        <Button Width="34" Height="30"
+                                Background="Transparent" BorderThickness="0"
+                                Foreground="{StaticResource DangerBrush}"
+                                Click="MintaHapus_Click"
+                                ToolTip="Hapus skenario"
+                                AutomationProperties.Name="Hapus skenario">
+                            <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE74D;"/>
+                        </Button>
+                    </DataTemplate>
+                </DataGridTemplateColumn.CellTemplate>
+            </DataGridTemplateColumn>
           </DataGrid.Columns>
         </DataGrid>
       </Border>
-      <TextBlock x:Name="Petunjuk" Text="Pilih 2–3 skenario, lalu klik Bandingkan."
+                <Border x:Name="KartuKosong" Style="{StaticResource Card}"
+        Visibility="Collapsed" Margin="0,16,0,0" Padding="24,44">
+                    <StackPanel HorizontalAlignment="Center">
+                        <Border Width="56" Height="56" CornerRadius="28"
+            HorizontalAlignment="Center"
+            Background="{StaticResource AccentSoftBrush}">
+                            <TextBlock Text="☀" FontSize="25"
+                 HorizontalAlignment="Center" VerticalAlignment="Center"
+                 Foreground="{StaticResource AccentBrush}"/>
+                        </Border>
+
+                        <TextBlock Text="Belum ada simulasi tersimpan"
+               HorizontalAlignment="Center" FontSize="17" FontWeight="SemiBold"
+               Margin="0,14,0,0" Foreground="{StaticResource InkBrush}"/>
+                        <TextBlock Text="Buat simulasi untuk melihat dan membandingkan hasilnya di sini."
+               TextAlignment="Center" TextWrapping="Wrap" Margin="0,6,0,16"
+               Foreground="{StaticResource MutedBrush}"/>
+
+                        <Button Content="Mulai Simulasi" HorizontalAlignment="Center"
+            Style="{StaticResource PrimaryButton}" Padding="18,10"
+            Click="MulaiSimulasi_Click"/>
+                    </StackPanel>
+                </Border>
+                <TextBlock x:Name="Petunjuk" Text="Pilih 2–3 skenario, lalu klik Bandingkan."
                  FontSize="12" Foreground="{StaticResource MutedBrush}" Margin="0,12,0,0"/>
       <StackPanel x:Name="BagianPerbandingan" Visibility="Collapsed">
         <TextBlock Text="Perbandingan Skenario" FontSize="16" FontWeight="SemiBold"
@@ -178,5 +219,32 @@
         </ItemsControl>
       </StackPanel>
     </StackPanel>
-  </ScrollViewer>
+        </ScrollViewer>
+
+        <Grid x:Name="OverlayHapus" Background="#61000000"
+        Visibility="Collapsed"
+        KeyboardNavigation.TabNavigation="Cycle"
+        PreviewKeyDown="OverlayHapus_KeyDown">
+            <Border Width="420" Padding="24"
+            HorizontalAlignment="Center" VerticalAlignment="Center"
+            Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Text="Hapus skenario?" FontSize="17" FontWeight="SemiBold"
+                   Foreground="{StaticResource InkBrush}"/>
+                    <TextBlock x:Name="PesanHapus" Margin="0,12,0,0"
+                   TextWrapping="Wrap" Foreground="{StaticResource MutedBrush}"/>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
+                    Margin="0,20,0,0">
+                        <Button x:Name="BatalHapus" Content="Batal" MinWidth="76"
+                  Style="{StaticResource SecondaryButton}"
+                  Click="BatalHapus_Click"/>
+                        <Button Content="Hapus" MinWidth="76" Margin="8,0,0,0"
+                  Style="{StaticResource DangerButton}"
+                  Click="KonfirmasiHapus_Click"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
 </UserControl>
