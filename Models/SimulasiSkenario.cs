@@ -106,6 +106,8 @@ public class SimulasiSkenario
     public int? JumlahPanel => jumlahPanel;
     public double? BiayaInstalasi => biayaInstalasi;
     public double? Keuntungan25Tahun => keuntungan25Tahun;
+    public IReadOnlyList<double>? ArusKasKumulatif { get; private set; }
+    public double? DegradasiTahunan => analisis?.DegradasiTahunan;
 
     // Input skenario; null untuk baris lama.
     public Lokasi? Lokasi => lokasi;
@@ -136,6 +138,7 @@ public class SimulasiSkenario
         penghematanTahunan = analisis.hitungPenghematanBulanan(produksiTahunan / 12, tarif) * 12;
         paybackPeriod = analisis.hitungPaybackPeriod();
         keuntungan25Tahun = analisis.proyeksiKeuntungan25Tahun();
+        ArusKasKumulatif = analisis.proyeksiArusKas();
         emisiDihindari = dampak.hitungEmisiDihindari(produksiTahunan);
     }
 

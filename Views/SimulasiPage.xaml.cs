@@ -324,24 +324,39 @@ public partial class SimulasiPage : UserControl
         sibuk = true;
         Hitung.IsEnabled = false;
         Hitung.Content = "Menghitung…";
+        var jendela = Window.GetWindow(this) as MainWindow;
+        var halamanHasil = new HasilPage();
+        double? konsumsiBulananKwh = TagihanBulananKwh;
+
         try
         {
-            var data = radiasi ?? await (pengambilan ?? Task.Run(() => cuaca.ambilDataRadiasi(lokasi)));
+            halamanHasil.TampilkanMemuat(lokasi.Nama);
+            jendela?.Buka(halamanHasil);
 
-            var skenario = new SimulasiSkenario(NamaBox.Text.Trim(), lokasi, PanelDipilih.Buat(), data,
-                                                new AnalisisFinansial(Angka(BiayaBox)!.Value), BuatTarif());
+            var data = radiasi ??
+                await (pengambilan ?? Task.Run(() => cuaca.ambilDataRadiasi(lokasi)));
+
+            var skenario = new SimulasiSkenario(
+                NamaBox.Text.Trim(),
+                lokasi,
+                PanelDipilih.Buat(),
+                data,
+                new AnalisisFinansial(Angka(BiayaBox)!.Value),
+                BuatTarif())
+            {
+                TagihanBulananKwh = konsumsiBulananKwh
+            };
+
             skenario.jalankanSimulasi();
             new RiwayatSimulasi(new RepositoriSimulasi()).tambahSkenario(skenario);
 
-            // ponytail: ke Riwayat dulu karena HasilPage(SimulasiSkenario) dari B1 belum ada.
-            // Setelah B1 masuk, ganti baris di bawah dengan:
-            //     ((MainWindow)Window.GetWindow(this)).Buka(new HasilPage(skenario));
-            ((MainWindow)Window.GetWindow(this)).Buka(2);
+            halamanHasil.TampilkanHasil(skenario, data.AdalahCadangan);
         }
-        catch (Exception ex) when (ex is SqliteException or IOException or UnauthorizedAccessException
-                                       or InvalidOperationException)
+        catch (Exception ex) when (ex is SqliteException or IOException
+                                       or UnauthorizedAccessException or InvalidOperationException)
         {
-            TampilkanBanner("Simulasi gagal disimpan: " + ex.Message);
+            jendela?.Buka(this);
+            TampilkanBanner("Simulasi gagal: " + ex.Message);
         }
         finally
         {
