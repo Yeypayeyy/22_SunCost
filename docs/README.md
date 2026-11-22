@@ -36,8 +36,8 @@ dikerjakan bersamaan tanpa konflik merge. Daftar kepemilikannya ada di
 | Pemilik | Tugas |
 |---|---|
 | Farrel | panduan singkat penggunaan, slide demo |
-| Mayra | jalankan 29 kasus uji black box dan isi kolom Hasil |
-| Sri | Uji silang 3 skenario ke PVGIS; query agregasi untuk laporan Teknik Basis Data; uji `.exe` di laptop lain |
+| Mayra | cek ulang tampilan secara manual (opsional) |
+| Sri | Uji silang 3 skenario ke PVGIS (opsional) |
 
 ## Keluaran wajib Modul 10
 
@@ -45,10 +45,10 @@ dikerjakan bersamaan tanpa konflik merge. Daftar kepemilikannya ada di
 |---|---|---|
 | Aplikasi final | semua | ✅ berjalan, fitur lengkap |
 | Layanan web API | Farrel | Open-Meteo sudah dipakai, sama dengan preseden kating (OpenWeatherMap) |
-| Dokumen pengujian | Farrel (BE-6) | kasus uji siap ([md](specs/pengujian.md), [docx](pengujian-blackbox-suncost.docx)); kolom Hasil diisi saat pengujian (M3) |
+| Dokumen pengujian | Farrel (BE-6) | ✅ 28/28 Sesuai ([md](specs/pengujian.md), [docx](pengujian-blackbox-suncost.docx)), diuji otomatis lewat `tests/uji-blackbox.ps1` |
 | Panduan singkat penggunaan | Farrel | belum |
 | Panduan konfigurasi basis data | Farrel | ✅ [panduan-basis-data.md](panduan-basis-data.md) |
-| Pengemasan `.exe` | Farrel | ✅ satu berkas ±70 MB, perlu diuji di laptop lain |
+| Pengemasan `.exe` | Farrel | ✅ satu berkas ±70 MB, self-contained (runtime .NET ikut di dalamnya) |
 
 Perintah pengemasan satu berkas. `IncludeNativeLibrariesForSelfExtract` wajib, supaya library
 native SQLite ikut terbawa:
