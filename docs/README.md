@@ -13,9 +13,9 @@
 
 | Orang | Peran | Tugas |
 |---|---|---|
-| Muhammad Farrel Al Ghazy | Software Architect + Frontend | FE-A: A1–A7 ✅, BE-3, BE-6, keluaran Modul 10 |
+| Muhammad Farrel Al Ghazy | Software Architect + Frontend | FE-A: A1–A7 ✅, BE-3 ✅, BE-4 ✅, BE-6, keluaran Modul 10 |
 | Mayravivania Syahda Charisa | Frontend Developer | FE-B: B1–B6 ✅ (B2 menunggu BE-7) |
-| Sri Wahyuni Arista | Backend Developer | BE-1 ✅, BE-2, BE-4, BE-5, BE-7, BE-8 |
+| Sri Wahyuni Arista | Backend Developer | BE-1 ✅, BE-2, BE-5, BE-7, BE-8 |
 
 Jalur FE-A dan FE-B sengaja dipisah berdasarkan kepemilikan berkas, sehingga keduanya dapat
 dikerjakan bersamaan tanpa konflik merge. Daftar kepemilikannya ada di
