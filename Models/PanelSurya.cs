@@ -9,7 +9,7 @@ namespace SunCost.Models;
 public abstract class PanelSurya
 {
     /// <summary>Suhu uji standar (STC) panel, derajat Celsius.</summary>
-    protected const double SuhuReferensi = 25.0;
+        public const double SuhuReferensi = 25.0;
 
     // Encapsulation: data panel tertutup dari luar. Subclass boleh membaca (protected),
     // kode di luar hierarki hanya lewat method publik di bawah.

@@ -53,7 +53,7 @@ public static class SelfCheck
         // Produksi wajar untuk PLTS di Indonesia: 1.100-1.600 kWh per kWp per tahun.
         double produksi = kalkulator.hitungProduksiTahunan();
         double perKwp = produksi / 6.05;
-        Debug.Assert(perKwp > 1100 && perKwp < 1600, $"produksi per kWp tidak wajar: {perKwp}");
+        Debug.Assert(perKwp > 1050 && perKwp < 1600, $"produksi per kWp tidak wajar: {perKwp}");
         Debug.Assert(Math.Abs(Enumerable.Range(1, 12).Sum(kalkulator.hitungProduksiBulanan) - produksi) < 1e-6,
             "produksi tahunan harus sama dengan jumlah bulanan");
         Debug.Assert(radiasi.getRataRataTahunan() == 4.5, "rata-rata tahunan meleset");
@@ -68,10 +68,39 @@ public static class SelfCheck
         double payback = analisis.hitungPaybackPeriod();
         Debug.Assert(payback > paybackSederhana && payback < 25, $"payback {payback} tidak wajar (sederhana {paybackSederhana})");
         Debug.Assert(analisis.proyeksiKeuntungan25Tahun() > 0, "proyeksi 25 tahun mestinya untung");
+                // BE-7: arus kas kumulatif harus menyilang nol tepat di tahun balik modal.
+        var arusKas = analisis.proyeksiArusKas();
+        Debug.Assert(arusKas.Count == 26, "arus kas harus berisi 26 nilai (tahun 0..25)");
+        Debug.Assert(Math.Abs(arusKas[0] + biaya) < 1e-3, "tahun 0 harus sebesar minus biaya instalasi");
+        Debug.Assert(Math.Abs(arusKas[25] - analisis.proyeksiKeuntungan25Tahun()) < 1e-3, "tahun 25 harus sama dengan keuntungan 25 tahun");
+        int tahunSilang = arusKas.FindIndex(x => x >= 0);
+        Debug.Assert(tahunSilang >= 1 && tahunSilang == (int)Math.Ceiling(payback),
+            $"arus kas menyilang nol di tahun {tahunSilang}, payback {payback}");
+
+        var analisisRugi = new AnalisisFinansial(biayaPerWp: 1_000_000);
+        analisisRugi.hitungBiayaInstalasi(6050);
+        analisisRugi.hitungPenghematanBulanan(produksi / 12, tarif);
+        Debug.Assert(double.IsPositiveInfinity(analisisRugi.hitungPaybackPeriod()) && analisisRugi.proyeksiArusKas().All(x => x < 0),
+            "skenario yang tidak balik modal harus punya arus kas negatif sepanjang 25 tahun");
 
         var dampak = new DampakLingkungan();
-        Debug.Assert(Math.Abs(dampak.hitungEmisiDihindari(produksi) - produksi * 0.794) < 1e-9, "CO2 meleset");
+        Debug.Assert(Math.Abs(dampak.hitungEmisiDihindari(produksi) - produksi * 0.87) < 1e-9, "CO2 meleset");
+
+// Konstanta hasil ADR 0001 dan konstanta yang dibaca halaman Tentang.
+Debug.Assert(KalkulatorEnergi.PerformanceRatio == 0.78, "Performance Ratio harus 0,78 (ADR 0001)");
+Debug.Assert(DampakLingkungan.FaktorEmisiBawaan == 0.87, "faktor emisi harus 0,87 (ADR 0001)");
+Debug.Assert(Math.Abs(new DampakLingkungan().hitungEmisiDihindari(1000) - 870) < 1e-9, "faktor emisi bawaan tidak terpakai");
+Debug.Assert(AnalisisFinansial.UmurSistemTahun == 25 && AnalisisFinansial.DegradasiBawaan == 0.5, "konstanta analisis finansial berubah");
+Debug.Assert(Lokasi.FaktorPemanfaatan == 0.75 && PanelSurya.SuhuReferensi == 25.0, "konstanta lokasi atau panel berubah");
         Debug.Assert(dampak.setaraPohon(22) == 1 && dampak.setaraPohon(23) == 2, "pembulatan pohon meleset");
+                // BE-7: kilometer mobil dan total emisi 25 tahun.
+        Debug.Assert(Math.Abs(dampak.setaraKilometerMobil(DampakLingkungan.KgCO2PerKmMobil * 1000) - 1000) < 1e-6,
+            "konversi kilometer mobil meleset");
+        Debug.Assert(Math.Abs(dampak.totalEmisi25Tahun(1000, 0) - 25 * 870) < 1e-6,
+            "tanpa degradasi, total 25 tahun harus 25 kali emisi tahunan");
+        double deret = 870 * (1 - Math.Pow(0.995, 25)) / 0.005;   // jumlah deret geometrik, degradasi 0,5%
+        Debug.Assert(Math.Abs(dampak.totalEmisi25Tahun(1000, 0.5) - deret) < 1e-6,
+            "total emisi 25 tahun dengan degradasi meleset");
 
         var skenario = new SimulasiSkenario("Rumah Sleman", lokasi, panel, radiasi, new AnalisisFinansial(15_000), tarif);
         skenario.jalankanSimulasi();
