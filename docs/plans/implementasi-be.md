@@ -10,13 +10,13 @@ Basis data: **SQLite lokal**, lihat [ADR 0002](../decisions/0002-database-sqlite
 | Tugas | Pemilik | Status |
 |---|---|---|
 | BE-1 · Migrasi skema ERD | Sri | ✅ selesai |
-| BE-2 · Menyimpan input skenario | Sri | sebagian (rincian hasil sudah ada) |
+| BE-2 · Menyimpan input skenario | Sri | ✅ selesai |
 | BE-3 · Layanan cuaca asinkron | **Farrel** | ✅ selesai |
 | BE-4 · Cache data radiasi | **Farrel** | ✅ selesai |
-| BE-5 · Data master awal | Sri | belum |
+| BE-5 · Data master awal | Sri | ✅ selesai, dropdown membaca database |
 | BE-6 · Dokumen pengujian Modul 10 | **Farrel** | belum |
-| BE-7 · Tiga method tab Finansial | Sri | belum |
-| BE-8 · Menyelaraskan konstanta | Sri | belum |
+| BE-7 · Tiga method tab Finansial | Sri | ✅ selesai |
+| BE-8 · Menyelaraskan konstanta | Sri | ✅ selesai |
 
 BE-3, BE-4, dan BE-6 dipindah dari Sri ke Farrel setelah jalur FE-A selesai. Pemakai BE-3 hanya
 `SimulasiPage` (milik FE-A), dan BE-6 adalah keluaran wajib Modul 10 yang sejalan dengan
