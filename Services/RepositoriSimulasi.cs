@@ -32,7 +32,8 @@ public class RepositoriSimulasi
             efisiensi       REAL NOT NULL,
             koefisien_suhu  REAL NOT NULL,
             luas_per_panel  REAL NOT NULL CHECK (luas_per_panel > 0),
-            harga_per_unit  REAL NOT NULL
+            harga_per_unit  REAL NOT NULL,
+            jenis           TEXT
         );
 
         CREATE TABLE IF NOT EXISTS tarif_listrik_pln (
@@ -112,6 +113,8 @@ public class RepositoriSimulasi
             cmd.ExecuteNonQuery();
         }
         TambahKolomYangBelumAda(db);
+        TambahKolomJenisPanel(db);
+        SisipkanDataAwal(db);
     }
 
     /// <summary>
@@ -148,6 +151,82 @@ public class RepositoriSimulasi
         }
     }
 
+        // Data master awal. Id tetap + INSERT OR IGNORE: aman dijalankan setiap aplikasi dibuka dan tidak
+    // menimpa baris yang sudah ada. Spesifikasi panel adalah nilai tipikal kelasnya, bukan datasheet
+    // satu produk; harga per unit hanya perkiraan.
+    private static readonly (string Id, string Merk, double Wp, double Efisiensi, double KoefSuhu,
+                             double LuasM2, double Harga, string Jenis)[] PanelAwal =
+    {
+        ("panel-mono-420", "Monokristalin 420 Wp", 420, 21.5, 0.35, 1.95, 1_800_000, "monokristalin"),
+        ("panel-mono-550", "Monokristalin 550 Wp", 550, 21.3, 0.40, 2.60, 2_750_000, "monokristalin"),
+        ("panel-thin-110", "Thin film a-Si 110 Wp", 110, 8.0, 0.21, 1.40, 1_100_000, "thin_film"),
+    };
+
+    // Tarif non-subsidi triwulan IV-2026.
+    private static readonly (string Id, string Golongan, double TarifPerKwh)[] TarifAwal =
+    {
+        ("tarif-r1-900", "R-1/TR 900 VA (RTM)", 1352.00),
+        ("tarif-r1-1300", "R-1/TR 1.300 VA", 1444.70),
+        ("tarif-r1-2200", "R-1/TR 2.200 VA", 1444.70),
+        ("tarif-r2", "R-2/TR 3.500-5.500 VA", 1699.53),
+    };
+
+    private const string TanggalTarifAwal = "2026-10-01";
+
+    /// <summary>Menambah kolom jenis pada panel_surya untuk database yang dibuat sebelum kolom ini ada.</summary>
+    private static void TambahKolomJenisPanel(SqliteConnection db)
+    {
+        using var cek = db.CreateCommand();
+        cek.CommandText = "SELECT COUNT(*) FROM pragma_table_info('panel_surya') WHERE name = 'jenis';";
+        if (Convert.ToInt64(cek.ExecuteScalar()) > 0) return;
+
+        using var alter = db.CreateCommand();
+        alter.CommandText = "ALTER TABLE panel_surya ADD COLUMN jenis TEXT;";
+        alter.ExecuteNonQuery();
+    }
+
+    private static void SisipkanDataAwal(SqliteConnection db)
+    {
+        using var tx = db.BeginTransaction();
+
+        foreach (var p in PanelAwal)
+        {
+            using var cmd = db.CreateCommand();
+            cmd.Transaction = tx;
+            cmd.CommandText = """
+                INSERT OR IGNORE INTO panel_surya
+                    (id, merk, kapasitas_wp, efisiensi, koefisien_suhu, luas_per_panel, harga_per_unit, jenis)
+                VALUES ($id, $merk, $wp, $ef, $koef, $luas, $harga, $jenis);
+                """;
+            cmd.Parameters.AddWithValue("$id", p.Id);
+            cmd.Parameters.AddWithValue("$merk", p.Merk);
+            cmd.Parameters.AddWithValue("$wp", p.Wp);
+            cmd.Parameters.AddWithValue("$ef", p.Efisiensi);
+            cmd.Parameters.AddWithValue("$koef", p.KoefSuhu);
+            cmd.Parameters.AddWithValue("$luas", p.LuasM2);
+            cmd.Parameters.AddWithValue("$harga", p.Harga);
+            cmd.Parameters.AddWithValue("$jenis", p.Jenis);
+            cmd.ExecuteNonQuery();
+        }
+
+        foreach (var t in TarifAwal)
+        {
+            using var cmd = db.CreateCommand();
+            cmd.Transaction = tx;
+            cmd.CommandText = """
+                INSERT OR IGNORE INTO tarif_listrik_pln (id, golongan, tarif_per_kwh, tanggal_berlaku)
+                VALUES ($id, $golongan, $tarif, $tanggal);
+                """;
+            cmd.Parameters.AddWithValue("$id", t.Id);
+            cmd.Parameters.AddWithValue("$golongan", t.Golongan);
+            cmd.Parameters.AddWithValue("$tarif", t.TarifPerKwh);
+            cmd.Parameters.AddWithValue("$tanggal", TanggalTarifAwal);
+            cmd.ExecuteNonQuery();
+        }
+
+        tx.Commit();
+    }
+    
     public bool simpan(SimulasiSkenario s)
     {
         using var db = BukaKoneksi();
