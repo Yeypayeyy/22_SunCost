@@ -29,6 +29,7 @@ public class DataRadiasi
     public double SuhuRataRata => suhuRataRata;
 
     public string SumberData => sumberData;
+    public DateTime TanggalAmbil => tanggalAmbil;
 
 /// <summary>True kalau angka berasal dari nilai cadangan, bukan data lokasi pengguna.</summary>
 public bool AdalahCadangan => sumberData.StartsWith("Cadangan", StringComparison.Ordinal);

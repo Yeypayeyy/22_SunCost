@@ -344,7 +344,7 @@ public partial class SimulasiPage : UserControl
                 new AnalisisFinansial(Angka(BiayaBox)!.Value),
                 BuatTarif())
             {
-                KonsumsiBulananKwh = konsumsiBulananKwh
+                TagihanBulananKwh = konsumsiBulananKwh
             };
 
             skenario.jalankanSimulasi();

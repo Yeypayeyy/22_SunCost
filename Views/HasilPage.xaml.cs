@@ -98,7 +98,7 @@ public partial class HasilPage : UserControl
 
         ProduksiTahunan.Text = skenario.ProduksiTahunan.ToString("#,##0", FormatId.Angka);
         RataBulanan.Text = rataBulanan.ToString("#,##0", FormatId.Angka);
-        SetaraKonsumsi.Text = skenario.KonsumsiBulananKwh is double konsumsi && konsumsi > 0
+        SetaraKonsumsi.Text = skenario.TagihanBulananKwh is double konsumsi && konsumsi > 0
             ? (rataBulanan / konsumsi).ToString("0%", FormatId.Angka)
             : "—";
 
@@ -185,7 +185,7 @@ public partial class HasilPage : UserControl
         SetaraKmMobil.Text =
             $"Setara {dampak.setaraKilometerMobil(emisi).ToString("#,##0", FormatId.Angka)} km perjalanan mobil";
 
-        TotalEmisi25Tahun.Text = skenario.DegradasiTahunan is double degradasi
+        TotalEmisi25Tahun.Text = skenario.Analisis?.DegradasiTahunan is double degradasi
             ? $"{dampak.totalEmisi25Tahun(skenario.ProduksiTahunan, degradasi).ToString("#,##0", FormatId.Angka)} kg CO₂ dihindari dalam 25 tahun"
             : "Total emisi dihindari dalam 25 tahun: —";
 
@@ -194,7 +194,9 @@ public partial class HasilPage : UserControl
 
     private void TampilkanGrafikArusKas(SimulasiSkenario skenario)
     {
-        var arusKas = skenario.ArusKasKumulatif;
+        var arusKas = skenario.BiayaInstalasi.HasValue
+            ? skenario.Analisis?.proyeksiArusKas()
+            : null;
 
         PanelGrafikArusKas.Visibility = Visibility.Collapsed;
         StatusArusKas.Visibility = Visibility.Visible;

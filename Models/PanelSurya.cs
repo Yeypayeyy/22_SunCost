@@ -35,6 +35,11 @@ public abstract class PanelSurya
     public abstract string Jenis { get; }
 
     public string Merk => merk;
+    public double KapasitasWp => kapasitasWp;
+    public double Efisiensi => efisiensi;
+    public double KoefisienSuhu => koefisienSuhu;
+    public double LuasPerPanel => luasPerPanel;
+    public double HargaPerUnit => hargaPerUnit;
 
     /// <summary>Jumlah panel utuh yang muat pada luas atap tertentu.</summary>
     public int hitungJumlahPanel(double luasAtap) =>

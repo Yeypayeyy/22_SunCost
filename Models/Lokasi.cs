@@ -42,10 +42,11 @@ public class Lokasi
 
 
     public double Latitude => latitude;
-    public string Nama => nama;
-    public double LuasAtap => luasAtap;
     public double Orientasi => orientasi;
     public double Kemiringan => kemiringan;
+    public string Nama => nama;
+    public double Longitude => longitude;
+    public double LuasAtap => luasAtap;
 
 }
 
