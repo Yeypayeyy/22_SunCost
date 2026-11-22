@@ -21,6 +21,7 @@ Rencana kerja, spesifikasi layar, dan catatan keputusan ada di [docs/](docs/READ
 - [Rencana implementasi frontend](docs/plans/implementasi-fe.md): jalur FE-A dan FE-B
 - [Rencana implementasi backend](docs/plans/implementasi-be.md): BE-1 sampai BE-8
 - [ADR 0001: asumsi perhitungan](docs/decisions/0001-asumsi-perhitungan.md)
+- [ADR 0002: basis data tetap SQLite lokal](docs/decisions/0002-database-sqlite.md)
 - [ERD basis data](docs/ERD.md)
 
 ## Detail Aplikasi
@@ -98,13 +99,16 @@ Open-Meteo dipilih karena gratis dan tidak memerlukan API key, serta menyediakan
 untuk koreksi penurunan efisiensi akibat suhu.
 
 SQLite dipilih karena basis data cukup satu berkas lokal, tidak memerlukan server,
-dan aplikasi tetap berjalan tanpa koneksi internet untuk data riwayat simulasi.
+dan aplikasi tetap berjalan tanpa koneksi internet untuk data riwayat simulasi
+([ADR 0002](docs/decisions/0002-database-sqlite.md) memuat alternatif yang ditimbang).
 
 #### Menjalankan Proyek
 
-```bash
-dotnet new wpf -n SunCost
-cd SunCost
-dotnet add package Microsoft.Data.Sqlite
+Butuh .NET 8 SDK. Dari folder proyek:
+
+```powershell
 dotnet run
 ```
+
+Basis data dibuat otomatis di `%LOCALAPPDATA%\SunCost\suncost.db` saat aplikasi pertama dibuka.
+Tidak ada yang perlu dipasang atau dikonfigurasi.
