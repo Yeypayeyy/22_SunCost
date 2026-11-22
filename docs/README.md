@@ -36,7 +36,7 @@ dikerjakan bersamaan tanpa konflik merge. Daftar kepemilikannya ada di
 | Pemilik | Tugas |
 |---|---|
 | Farrel | panduan singkat penggunaan, slide demo |
-| Mayra | jalankan 29 kasus uji black box dan isi kolom Hasil; "Untung 25 thn" di kartu perbandingan Riwayat masih `-`; teks status Riwayat sudah basi; uji semua halaman |
+| Mayra | jalankan 29 kasus uji black box dan isi kolom Hasil |
 | Sri | Uji silang 3 skenario ke PVGIS; query agregasi untuk laporan Teknik Basis Data; uji `.exe` di laptop lain |
 
 ## Keluaran wajib Modul 10

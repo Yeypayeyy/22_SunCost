@@ -373,6 +373,8 @@ Debug.Assert(skenario.Keuntungan25Tahun > 0, "keuntungan 25 tahun mestinya posit
             Debug.Assert(muat is not null && muat.Lokasi is not null && muat.Panel is not null
                          && muat.Tarif is not null && muat.DataRadiasi is not null && muat.Analisis is not null,
                 "skenario yang dimuat harus punya semua input");
+            Debug.Assert(new Views.RiwayatPage.Baris(muat!).Untung.StartsWith("Rp "),
+                "kartu perbandingan Riwayat harus menampilkan keuntungan 25 tahun");
             Debug.Assert(muat!.Lokasi!.Nama == s.Lokasi!.Nama && muat.Lokasi.LuasAtap == s.Lokasi.LuasAtap
                          && muat.Lokasi.Orientasi == s.Lokasi.Orientasi && muat.Lokasi.Kemiringan == s.Lokasi.Kemiringan
                          && muat.Lokasi.Latitude == s.Lokasi.Latitude && muat.Lokasi.Longitude == s.Lokasi.Longitude,
