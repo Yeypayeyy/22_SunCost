@@ -96,6 +96,12 @@ public partial class RiwayatPage : UserControl
             jendela.Buka(1);
     }
 
+    private void Lihat_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button { DataContext: Baris baris } && Window.GetWindow(this) is MainWindow jendela)
+            jendela.Buka(new HasilPage(baris.Skenario));
+    }
+
     private Baris? targetHapus;
     private Button? tombolPemicuHapus;
 

@@ -40,7 +40,7 @@ public partial class HasilPage : UserControl
 
     public HasilPage(SimulasiSkenario skenario) : this()
     {
-        TampilkanHasil(skenario, dataCadangan: false);
+        TampilkanHasil(skenario, dataCadangan: skenario.DataRadiasi?.AdalahCadangan == true);
     }
 
     public void TampilkanMemuat(string? lokasi = null)
