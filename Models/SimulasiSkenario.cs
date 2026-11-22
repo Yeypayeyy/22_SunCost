@@ -73,6 +73,13 @@ public class SimulasiSkenario
     public int? JumlahPanel => jumlahPanel;
     public double? BiayaInstalasi => biayaInstalasi;
     public double? Keuntungan25Tahun => keuntungan25Tahun;
+    public IReadOnlyList<double>? ArusKasKumulatif { get; private set; }
+    public double? DegradasiTahunan => analisis?.DegradasiTahunan;
+
+    public Lokasi? Lokasi => lokasi;
+    public PanelSurya? Panel => panel;
+    public DataRadiasi? DataRadiasi => dataRadiasi;
+    public double? KonsumsiBulananKwh { get; init; }
 
     public void jalankanSimulasi()
     {
@@ -93,6 +100,7 @@ public class SimulasiSkenario
         penghematanTahunan = analisis.hitungPenghematanBulanan(produksiTahunan / 12, tarif) * 12;
         paybackPeriod = analisis.hitungPaybackPeriod();
         keuntungan25Tahun = analisis.proyeksiKeuntungan25Tahun();
+        ArusKasKumulatif = analisis.proyeksiArusKas();
         emisiDihindari = dampak.hitungEmisiDihindari(produksiTahunan);
     }
 

@@ -87,10 +87,20 @@ public partial class HasilPage : UserControl
         ArgumentNullException.ThrowIfNull(skenario);
         AturSkeleton(false);
 
-        Ringkasan.Text = skenario.Nama;
+        var lokasi = skenario.Lokasi;
+        double rataBulanan = skenario.ProduksiTahunan / 12;
+
+        Ringkasan.Text = lokasi is null
+            ? skenario.Nama
+            : string.Format(FormatId.Angka,
+                "{0} · atap {1:0.##} m² · orientasi {2:0.##}° · kemiringan {3:0.##}°",
+                lokasi.Nama, lokasi.LuasAtap, lokasi.Orientasi, lokasi.Kemiringan);
+
         ProduksiTahunan.Text = skenario.ProduksiTahunan.ToString("#,##0", FormatId.Angka);
-        RataBulanan.Text = (skenario.ProduksiTahunan / 12).ToString("#,##0", FormatId.Angka);
-        SetaraKonsumsi.Text = "—";
+        RataBulanan.Text = rataBulanan.ToString("#,##0", FormatId.Angka);
+        SetaraKonsumsi.Text = skenario.KonsumsiBulananKwh is double konsumsi && konsumsi > 0
+            ? (rataBulanan / konsumsi).ToString("0%", FormatId.Angka)
+            : "—";
 
         if (skenario.KapasitasKwp is double kapasitas)
         {
@@ -104,6 +114,7 @@ public partial class HasilPage : UserControl
             TampilkanBatang(skenario.ProduksiBulanan.ToArray());
         }
         TampilkanFinansial(skenario);
+        TampilkanAsumsi(skenario, dataCadangan);
         TampilkanBannerCadangan(dataCadangan);
     }
 
@@ -228,21 +239,41 @@ public partial class HasilPage : UserControl
 
     private record AsumsiTampilan(string Nama, string Nilai, string Keterangan);
 
+    private void TampilkanAsumsi(SimulasiSkenario skenario, bool dataCadangan)
+    {
+        Asumsi.ItemsSource = null;
+
+        if (skenario.Lokasi is not { } lokasi || skenario.Panel is not { } panel ||
+            skenario.DataRadiasi is not { } radiasi)
+            return;
+
+        var kalkulator = new KalkulatorEnergi(lokasi, panel, radiasi);
+        double faktorSuhu = kalkulator.hitungKoreksiSuhu(radiasi.SuhuRataRata, panel);
+
+        Asumsi.ItemsSource = new[]
+        {
+        new AsumsiTampilan(
+            "Peak Sun Hours (PSH)",
+            radiasi.getRataRataTahunan().ToString("0.0", FormatId.Angka) + " jam/hari",
+            dataCadangan
+                ? "Cadangan rata-rata Indonesia — API tidak terjangkau"
+                : radiasi.SumberData),
+        new AsumsiTampilan(
+            "Performance Ratio (PR)",
+            KalkulatorEnergi.PerformanceRatio.ToString("0.00", FormatId.Angka),
+            "Faktor efisiensi sistem yang dipakai kalkulator"),
+        new AsumsiTampilan(
+            "Koreksi suhu",
+            faktorSuhu.ToString("0.0%", FormatId.Angka),
+            "Persentase daya panel setelah koreksi suhu")
+    };
+    }
+
     private void TampilkanBannerCadangan(bool dataCadangan)
     {
         BannerCadangan.Visibility = dataCadangan
             ? Visibility.Visible
             : Visibility.Collapsed;
-
-        Asumsi.ItemsSource = dataCadangan
-            ? new[]
-            {
-            new AsumsiTampilan(
-                "Peak Sun Hours (PSH)",
-                "4,5 jam/hari",
-                "Cadangan rata-rata Indonesia — API tidak terjangkau")
-            }
-            : null;
 
         if (dataCadangan)
             Ringkasan.Text += " · data cadangan";

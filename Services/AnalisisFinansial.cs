@@ -12,6 +12,7 @@ public class AnalisisFinansial
 
     /// <summary>Degradasi panel bawaan, persen per tahun.</summary>
     public const double DegradasiBawaan = 0.5;
+    public double DegradasiTahunan => degradasiTahunan;
 
     private double biayaPerWp;          // rupiah per Wp terpasang (panel, inverter, struktur, jasa)
     private double biayaInstalasi;      // rupiah
@@ -21,7 +22,7 @@ public class AnalisisFinansial
     private bool biayaSudahDihitung;
     private bool penghematanSudahDihitung;
 
-        public AnalisisFinansial(double biayaPerWp, double degradasiTahunan = DegradasiBawaan)
+    public AnalisisFinansial(double biayaPerWp, double degradasiTahunan = DegradasiBawaan)
     {
         this.biayaPerWp = biayaPerWp;
         this.degradasiTahunan = degradasiTahunan;

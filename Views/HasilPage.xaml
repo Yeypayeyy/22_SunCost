@@ -231,7 +231,7 @@
                                 <TextBlock DockPanel.Dock="Right" Text="Tahun 25"/>
                                 <TextBlock Text="Tahun 0"/>
                             </DockPanel>
-                        </StackPanel> Margin="0,8,0,0" Foreground="{StaticResource MutedBrush}"/>
+                        </StackPanel> 
                 </StackPanel>
             </Border>
 
