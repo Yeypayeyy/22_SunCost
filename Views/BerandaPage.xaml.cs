@@ -29,8 +29,7 @@ public partial class BerandaPage : UserControl
 
             RiwayatTerakhir.ItemsSource = terakhir.Select(s => new Kartu(
                 s.Nama,
-                // ponytail: kapasitas belum disimpan di database; tampil "-" sampai BE-2 menyimpan input skenario.
-                "-",
+                s.KapasitasKwp is double kapasitas ? kapasitas.ToString("0.##", FormatId.Angka) + " kWp" : "-",
                 double.IsFinite(s.PaybackPeriod) ? s.PaybackPeriod.ToString("0.0", FormatId.Angka) + " tahun" : "-",
                 "Rp " + (s.PenghematanTahunan / 12).ToString("#,##0", FormatId.Angka))).ToList();
         }
