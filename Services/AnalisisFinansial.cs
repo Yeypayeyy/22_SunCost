@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using SunCost.Models;
 
 namespace SunCost.Services;
@@ -67,6 +68,24 @@ public class AnalisisFinansial
             kumulatif += hematTahunIni;
         }
         return double.PositiveInfinity; // tidak balik modal selama umur sistem
+        
+    }
+        /// <summary>
+    /// Arus kas kumulatif per akhir tahun 0..25 (26 nilai). Tahun 0 bernilai negatif sebesar biaya
+    /// instalasi; titik potong nol sama dengan periode balik modal pada hitungPaybackPeriod.
+    /// </summary>
+    public List<double> proyeksiArusKas()
+    {
+        PastikanSiap();
+        var arus = new List<double>(UmurSistemTahun + 1);
+        double kumulatif = -biayaInstalasi;
+        arus.Add(kumulatif);
+        for (int tahun = 0; tahun < UmurSistemTahun; tahun++)
+        {
+            kumulatif += penghematanBulanan * 12 * Math.Pow(1 - degradasiTahunan / 100, tahun);
+            arus.Add(kumulatif);
+        }
+        return arus;
     }
 
     /// <summary>Total penghematan 25 tahun dikurangi biaya instalasi.</summary>
