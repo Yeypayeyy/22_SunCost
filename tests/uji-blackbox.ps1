@@ -100,7 +100,23 @@ function IsiForm($nama, $lokasi, $luas, $panel, $biaya, $tagihan) {
 $db = "$env:LOCALAPPDATA\SunCost\suncost.db"
 $teksCadangan = 'Open-Meteo tidak dapat dihubungi. Angka di bawah memakai data cadangan rata-rata Indonesia (4,5 kWh/m²/hari) — kurang akurat untuk lokasi ini.'
 $cadangan = Join-Path $env:TEMP "suncost-sebelum-uji.db"
-if (Test-Path $db) { Copy-Item $db $cadangan -Force; Remove-Item $db -Force }
+# SunCost yang masih terbuka mengunci berkas basis data; tutup dulu sebelum dicadangkan.
+$terbuka = @(Get-Process SunCost -ErrorAction SilentlyContinue)
+if ($terbuka.Count -gt 0) {
+  Write-Output "Menutup $($terbuka.Count) jendela SunCost yang masih terbuka..."
+  $terbuka | Stop-Process -Force; $terbuka | Wait-Process -Timeout 10 -ErrorAction SilentlyContinue
+}
+if (Test-Path $db) {
+  Copy-Item $db $cadangan -Force
+  # Windows bisa melepas kunci berkas sesaat setelah proses berhenti, jadi coba hapus beberapa kali.
+  for ($i = 1; Test-Path $db; $i++) {
+    try { Remove-Item $db -Force -ErrorAction Stop }
+    catch [System.IO.IOException] {
+      if ($i -ge 20) { throw "suncost.db masih dikunci program lain. Tutup SunCost atau DB Browser, lalu jalankan ulang." }
+      Start-Sleep -Milliseconds 500
+    }
+  }
+}
 try {
 
 # ================================================================ sesi 1: database baru, online
