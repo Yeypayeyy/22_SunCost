@@ -6,7 +6,11 @@ namespace SunCost.Services;
 /// <summary>Menilai kelayakan finansial: biaya instalasi, penghematan, balik modal, dan keuntungan.</summary>
 public class AnalisisFinansial
 {
-    private const int UmurSistemTahun = 25;
+        /// <summary>Umur sistem yang dianalisis, dalam tahun.</summary>
+    public const int UmurSistemTahun = 25;
+
+    /// <summary>Degradasi panel bawaan, persen per tahun.</summary>
+    public const double DegradasiBawaan = 0.5;
 
     private double biayaPerWp;          // rupiah per Wp terpasang (panel, inverter, struktur, jasa)
     private double biayaInstalasi;      // rupiah
@@ -16,7 +20,7 @@ public class AnalisisFinansial
     private bool biayaSudahDihitung;
     private bool penghematanSudahDihitung;
 
-    public AnalisisFinansial(double biayaPerWp, double degradasiTahunan = 0.5)
+        public AnalisisFinansial(double biayaPerWp, double degradasiTahunan = DegradasiBawaan)
     {
         this.biayaPerWp = biayaPerWp;
         this.degradasiTahunan = degradasiTahunan;

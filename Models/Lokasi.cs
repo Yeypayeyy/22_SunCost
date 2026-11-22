@@ -6,7 +6,7 @@ namespace SunCost.Models;
 public class Lokasi
 {
     /// <summary>Bagian luas atap yang benar-benar terpakai panel; sisanya jarak antar-larik dan jalur perawatan.</summary>
-    private const double FaktorPemanfaatan = 0.75;
+        public const double FaktorPemanfaatan = 0.75;
 
     private string nama;
     private double latitude;

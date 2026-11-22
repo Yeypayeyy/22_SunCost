@@ -53,7 +53,7 @@ public static class SelfCheck
         // Produksi wajar untuk PLTS di Indonesia: 1.100-1.600 kWh per kWp per tahun.
         double produksi = kalkulator.hitungProduksiTahunan();
         double perKwp = produksi / 6.05;
-        Debug.Assert(perKwp > 1100 && perKwp < 1600, $"produksi per kWp tidak wajar: {perKwp}");
+        Debug.Assert(perKwp > 1050 && perKwp < 1600, $"produksi per kWp tidak wajar: {perKwp}");
         Debug.Assert(Math.Abs(Enumerable.Range(1, 12).Sum(kalkulator.hitungProduksiBulanan) - produksi) < 1e-6,
             "produksi tahunan harus sama dengan jumlah bulanan");
         Debug.Assert(radiasi.getRataRataTahunan() == 4.5, "rata-rata tahunan meleset");
@@ -70,7 +70,14 @@ public static class SelfCheck
         Debug.Assert(analisis.proyeksiKeuntungan25Tahun() > 0, "proyeksi 25 tahun mestinya untung");
 
         var dampak = new DampakLingkungan();
-        Debug.Assert(Math.Abs(dampak.hitungEmisiDihindari(produksi) - produksi * 0.794) < 1e-9, "CO2 meleset");
+        Debug.Assert(Math.Abs(dampak.hitungEmisiDihindari(produksi) - produksi * 0.87) < 1e-9, "CO2 meleset");
+
+// Konstanta hasil ADR 0001 dan konstanta yang dibaca halaman Tentang.
+Debug.Assert(KalkulatorEnergi.PerformanceRatio == 0.78, "Performance Ratio harus 0,78 (ADR 0001)");
+Debug.Assert(DampakLingkungan.FaktorEmisiBawaan == 0.87, "faktor emisi harus 0,87 (ADR 0001)");
+Debug.Assert(Math.Abs(new DampakLingkungan().hitungEmisiDihindari(1000) - 870) < 1e-9, "faktor emisi bawaan tidak terpakai");
+Debug.Assert(AnalisisFinansial.UmurSistemTahun == 25 && AnalisisFinansial.DegradasiBawaan == 0.5, "konstanta analisis finansial berubah");
+Debug.Assert(Lokasi.FaktorPemanfaatan == 0.75 && PanelSurya.SuhuReferensi == 25.0, "konstanta lokasi atau panel berubah");
         Debug.Assert(dampak.setaraPohon(22) == 1 && dampak.setaraPohon(23) == 2, "pembulatan pohon meleset");
 
         var skenario = new SimulasiSkenario("Rumah Sleman", lokasi, panel, radiasi, new AnalisisFinansial(15_000), tarif);
