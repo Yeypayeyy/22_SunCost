@@ -1,13 +1,26 @@
 # Rencana Implementasi Backend
 
-Pemilik: **Sri Wahyuni Arista**
-
 Lingkup: `Models/`, `Services/`, skema database. Tidak menyentuh `Views/`, `App.xaml`,
 atau `MainWindow.*`: itu milik jalur frontend, lihat [implementasi-fe.md](implementasi-fe.md).
 
-Keadaan sekarang: mesin perhitungan sudah lengkap dan terbukti lewat `SelfCheck.cs`, tetapi
-database hanya menyimpan hasil akhir dan layanan cuaca tidak pernah dipanggil dari alur
-pengguna mana pun.
+Basis data: **SQLite lokal**, lihat [ADR 0002](../decisions/0002-database-sqlite.md).
+
+## Status dan pemilik
+
+| Tugas | Pemilik | Status |
+|---|---|---|
+| BE-1 · Migrasi skema ERD | Sri | ✅ selesai |
+| BE-2 · Menyimpan input skenario | Sri | sebagian (rincian hasil sudah ada) |
+| BE-3 · Layanan cuaca asinkron | **Farrel** | sebagian (`AdalahCadangan` sudah ada) |
+| BE-4 · Cache data radiasi | Sri | belum |
+| BE-5 · Data master awal | Sri | belum |
+| BE-6 · Dokumen pengujian Modul 10 | **Farrel** | belum |
+| BE-7 · Tiga method tab Finansial | Sri | belum |
+| BE-8 · Menyelaraskan konstanta | Sri | belum |
+
+BE-3 dan BE-6 dipindah dari Sri ke Farrel setelah jalur FE-A selesai. Pemakai BE-3 hanya
+`SimulasiPage` (milik FE-A), dan BE-6 adalah keluaran wajib Modul 10 yang sejalan dengan
+panduan dan pengemasan `.exe`.
 
 ## BE-1 · Migrasi skema ke ERD penuh
 
@@ -59,6 +72,17 @@ public double? TagihanBulananKwh { get; init; }
 
 Simpan juga `TagihanBulananKwh` di database (kolom nullable pada `skenario`).
 
+**Sudah ada di `main`:** `ProduksiBulanan`, `KapasitasKwp`, `JumlahPanel`, `BiayaInstalasi`,
+dan `Keuntungan25Tahun` pada `SimulasiSkenario`.
+
+**Dua kolom baru** yang dibutuhkan, ditambahkan dengan pola `KolomTambahanSkenario` dari BE-1
+(`ALTER TABLE ... ADD COLUMN`, aman untuk database lama):
+
+| Tabel | Kolom | Untuk |
+|---|---|---|
+| `skenario` | `tagihan_bulanan_kwh REAL` | KPI "Setara konsumsi" |
+| `panel_surya` | `jenis TEXT` (`'monokristalin'` / `'thin_film'`) | Saat dimuat, memilih `new PanelMonokristal(...)` atau `new PanelThinFilm(...)` supaya rumus koreksi suhu yang benar ikut kembali |
+
 Catatan performa: `ambilById()` sekarang memindai seluruh riwayat
 (`ambilSemua().Find(...)`). Sekalian ganti menjadi query `WHERE id = $id`.
 
@@ -67,7 +91,7 @@ Catatan performa: `ambilById()` sekarang memindai seluruh riwayat
 
 ## BE-3 · Layanan cuaca menjadi asinkron
 
-Berkas: `Services/LayananCuacaAPI.cs`
+Pemilik: **Farrel** · Berkas: `Services/LayananCuacaAPI.cs`, `Views/SimulasiPage.xaml.cs`
 
 ```csharp
 // sekarang: memblokir thread pemanggil sampai 20 detik
@@ -84,11 +108,13 @@ Komentar di kode menyebut "tidak kembali ke thread UI", itu tidak berlaku lagi b
 `HttpClient` juga dibuat baru pada setiap instance. Jadikan `static readonly` supaya tidak
 menghabiskan socket.
 
-Kembalikan juga penanda apakah hasil berasal dari API atau dari `DataCadangan()`, karena
-frontend wajib menampilkannya (lihat B4). Nilai `DataRadiasi.sumberData` sudah membedakan
-keduanya, cukup ekspos sebagai properti publik.
+Penanda data cadangan **sudah selesai** di `main` (`DataRadiasi.AdalahCadangan`) dan sudah dipakai
+`SimulasiPage` serta banner B4.
 
-**Selesai bila:** jendela tetap bisa digerakkan selama pengambilan data berlangsung.
+Setelah method async ada, `Task.Run` di `SimulasiPage.xaml.cs` (ditandai `ponytail:`) diganti
+pemanggilan langsung.
+
+**Selesai bila:** jendela tetap bisa digerakkan selama pengambilan data berlangsung, tanpa `Task.Run`.
 
 ## BE-4 · Cache data radiasi
 
@@ -121,7 +147,7 @@ aplikasi dibuka.
 
 ## BE-6 · Dokumen pengujian Modul 10
 
-Berkas: `docs/specs/pengujian.md` *(baru)*
+Pemilik: **Farrel** · Berkas: `docs/specs/pengujian.md` *(baru)*
 
 `Services/SelfCheck.cs` sudah memuat sekitar tiga puluh pernyataan uji yang menutup validasi
 lokasi, jumlah panel, kapasitas, koreksi suhu, polimorfisme panel, kewajaran produksi,
@@ -195,15 +221,18 @@ Perbarui keduanya.
 ## Urutan pengerjaan
 
 ```
-BE-1 ─ BE-2 ─ BE-4
-BE-3 ─────────┘
-BE-5  ← setelah BE-1
-BE-7  ← bebas, tidak bergantung pada yang lain
-BE-6  ← terus diperbarui seiring tugas lain selesai
-BE-8  ← menunggu ADR 0001
+Sri    : BE-8 ─ BE-7        (bisa sekarang)
+         BE-2 ─ BE-4        (BE-4 juga menunggu BE-3)
+         BE-5               (bisa sekarang, BE-1 sudah selesai)
+Farrel : BE-3, BE-6         (bisa sekarang)
 ```
 
-BE-1 adalah jalur kritis: A6 dan B1 di sisi frontend menunggu hasilnya. Kerjakan lebih dulu.
+BE-8 dikerjakan sebelum BE-7, karena BE-8 mengubah angka dasar (PR 0,78, emisi 0,87). Kalau
+urutannya terbalik, angka uji BE-7 harus dihitung ulang. BE-7 membuka jalan untuk isi tab
+Finansial B2, yang tata letaknya sudah ada di `main`.
+
+BE-2 adalah jalur kritis berikutnya: kolom Luas atap, Kapasitas, dan Untung 25 tahun di Riwayat,
+serta kartu Beranda, masih menampilkan `-` sampai input skenario disimpan.
 
 ## Aturan kerja
 
