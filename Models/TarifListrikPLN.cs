@@ -17,6 +17,8 @@ public class TarifListrikPLN
     }
 
     public double getTarifPerKWh() => tarifPerKWh;
+    public string Golongan => golongan;
+    public DateTime TanggalBerlaku => tanggalBerlaku;
 
     /// <summary>Biaya listrik dalam rupiah untuk pemakaian sejumlah kWh.</summary>
     public double hitungBiaya(double kWh) => kWh * tarifPerKWh;

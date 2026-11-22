@@ -16,15 +16,14 @@ public class SimulasiSkenario
     private double paybackPeriod;        // tahun
     private double emisiDihindari;       // kg CO2 per tahun
 
-    // Rincian hasil. Kosong/null untuk skenario yang dimuat dari riwayat, karena database belum menyimpannya.
+    // Rincian hasil. Kosong/null untuk baris lama yang tidak punya input tersimpan.
     private double[] produksiBulanan = Array.Empty<double>();   // kWh, indeks 0 = Januari
     private double? kapasitasKwp;
     private int? jumlahPanel;
     private double? biayaInstalasi;       // rupiah
     private double? keuntungan25Tahun;    // rupiah
 
-    // Asosiasi 1-1 pada class diagram. Bernilai null untuk skenario yang dimuat dari riwayat,
-    // karena database hanya menyimpan hasil perhitungannya.
+    // Asosiasi 1-1 pada class diagram. Null hanya untuk baris lama (dari database sebelum input disimpan).
     private readonly Lokasi? lokasi;
     private readonly PanelSurya? panel;
     private readonly DataRadiasi? dataRadiasi;
@@ -45,7 +44,41 @@ public class SimulasiSkenario
         this.tarif = tarif;
     }
 
-    /// <summary>Skenario yang dibaca ulang dari riwayat.</summary>
+    /// <summary>
+    /// Skenario utuh yang dibaca dari database: input lengkap plus hasil tersimpan (snapshot).
+    /// Rincian (produksi bulanan, biaya, keuntungan) diturunkan dari input, dan skenario ini
+    /// tetap bisa dihitung ulang dengan <see cref="jalankanSimulasi"/>.
+    /// </summary>
+    public SimulasiSkenario(string id, string nama, DateTime tanggal,
+                            Lokasi lokasi, PanelSurya panel, DataRadiasi dataRadiasi,
+                            AnalisisFinansial analisis, TarifListrikPLN tarif,
+                            int jumlahPanel, double kapasitasKwp,
+                            double produksiTahunan, double penghematanTahunan,
+                            double paybackPeriod, double emisiDihindari)
+    {
+        this.id = id;
+        this.nama = nama;
+        this.tanggal = tanggal;
+        this.lokasi = lokasi;
+        this.panel = panel;
+        this.dataRadiasi = dataRadiasi;
+        this.analisis = analisis;
+        this.tarif = tarif;
+        this.jumlahPanel = jumlahPanel;
+        this.kapasitasKwp = kapasitasKwp;
+        this.produksiTahunan = produksiTahunan;
+        this.penghematanTahunan = penghematanTahunan;
+        this.paybackPeriod = paybackPeriod;
+        this.emisiDihindari = emisiDihindari;
+
+        var kalkulator = new KalkulatorEnergi(lokasi, panel, dataRadiasi);
+        produksiBulanan = Enumerable.Range(1, 12).Select(kalkulator.hitungProduksiBulanan).ToArray();
+        biayaInstalasi = analisis.hitungBiayaInstalasi(kapasitasKwp * 1000);
+        analisis.hitungPenghematanBulanan(produksiTahunan / 12, tarif);   // memenuhi guard AnalisisFinansial
+        keuntungan25Tahun = analisis.proyeksiKeuntungan25Tahun();
+    }
+
+    /// <summary>Baris lama yang hanya punya hasil (tanpa input); dipakai untuk database sebelum input disimpan.</summary>
     public SimulasiSkenario(string id, string nama, DateTime tanggal, double produksiTahunan,
                             double penghematanTahunan, double paybackPeriod, double emisiDihindari)
     {
@@ -67,12 +100,22 @@ public class SimulasiSkenario
     public double PaybackPeriod => paybackPeriod;
     public double EmisiDihindari => emisiDihindari;
 
-    /// <summary>Produksi 12 bulan (kWh); kosong kalau skenario dari riwayat.</summary>
+    /// <summary>Produksi 12 bulan (kWh); kosong kalau skenario tidak punya input tersimpan.</summary>
     public IReadOnlyList<double> ProduksiBulanan => produksiBulanan;
     public double? KapasitasKwp => kapasitasKwp;
     public int? JumlahPanel => jumlahPanel;
     public double? BiayaInstalasi => biayaInstalasi;
     public double? Keuntungan25Tahun => keuntungan25Tahun;
+
+    // Input skenario; null untuk baris lama.
+    public Lokasi? Lokasi => lokasi;
+    public PanelSurya? Panel => panel;
+    public DataRadiasi? DataRadiasi => dataRadiasi;
+    public TarifListrikPLN? Tarif => tarif;
+    public AnalisisFinansial? Analisis => analisis;
+
+    /// <summary>Konsumsi listrik bulanan pengguna (kWh) dari isian "Tagihan listrik bulanan"; dipakai KPI "Setara konsumsi".</summary>
+    public double? TagihanBulananKwh { get; init; }
 
     public void jalankanSimulasi()
     {

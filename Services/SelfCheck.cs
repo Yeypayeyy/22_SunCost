@@ -117,6 +117,7 @@ Debug.Assert(skenario.Keuntungan25Tahun > 0, "keuntungan 25 tahun mestinya posit
         CekPenyimpanan(skenario);
         CekSkemaPenuh();
         CekDataAwal();
+        CekInputSkenario(skenario);
         CekTampilanRiwayat();
     }
 
@@ -293,6 +294,86 @@ Debug.Assert(skenario.Keuntungan25Tahun > 0, "keuntungan 25 tahun mestinya posit
             Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
             if (File.Exists(baru)) File.Delete(baru);
             if (File.Exists(lama)) File.Delete(lama);
+        }
+    }
+    private static void CekInputSkenario(SimulasiSkenario s)
+    {
+        string berkas = Path.Combine(Path.GetTempPath(), $"suncost-input-{Guid.NewGuid():N}.db");
+        try
+        {
+            var repo = new RepositoriSimulasi(berkas);
+            var riwayat = new RiwayatSimulasi(repo);
+            riwayat.tambahSkenario(s);
+
+            void PeriksaJumlah(long lokasi, long radiasi, long bulanan, string label)
+            {
+                using var db = repo.BukaKoneksi();
+                Debug.Assert(Hitung(db, "SELECT COUNT(*) FROM lokasi") == lokasi, $"{label}: jumlah lokasi");
+                Debug.Assert(Hitung(db, "SELECT COUNT(*) FROM data_radiasi") == radiasi, $"{label}: jumlah data radiasi");
+                Debug.Assert(Hitung(db, "SELECT COUNT(*) FROM radiasi_bulanan") == bulanan, $"{label}: jumlah radiasi bulanan");
+            }
+            PeriksaJumlah(1, 1, 12, "setelah simpan");
+
+            // Skenario dirakit utuh dari database.
+            var muat = repo.ambilById(s.Id);
+            Debug.Assert(muat is not null && muat.Lokasi is not null && muat.Panel is not null
+                         && muat.Tarif is not null && muat.DataRadiasi is not null && muat.Analisis is not null,
+                "skenario yang dimuat harus punya semua input");
+            Debug.Assert(muat!.Lokasi!.Nama == s.Lokasi!.Nama && muat.Lokasi.LuasAtap == s.Lokasi.LuasAtap
+                         && muat.Lokasi.Orientasi == s.Lokasi.Orientasi && muat.Lokasi.Kemiringan == s.Lokasi.Kemiringan
+                         && muat.Lokasi.Latitude == s.Lokasi.Latitude && muat.Lokasi.Longitude == s.Lokasi.Longitude,
+                "lokasi hasil muat berbeda");
+            Debug.Assert(muat.Panel!.Merk == s.Panel!.Merk && muat.Panel.Jenis == s.Panel.Jenis
+                         && muat.Panel.KapasitasWp == s.Panel.KapasitasWp && muat.Panel.KoefisienSuhu == s.Panel.KoefisienSuhu,
+                "panel hasil muat berbeda (cek jenis panel)");
+            Debug.Assert(muat.Tarif!.Golongan == s.Tarif!.Golongan && muat.Tarif.getTarifPerKWh() == s.Tarif.getTarifPerKWh(),
+                "tarif hasil muat berbeda");
+            Debug.Assert(muat.DataRadiasi!.SuhuRataRata == s.DataRadiasi!.SuhuRataRata
+                         && Enumerable.Range(1, 12).All(b => muat.DataRadiasi.getPeakSunHours(b) == s.DataRadiasi.getPeakSunHours(b)),
+                "data radiasi hasil muat berbeda");
+
+            // Rincian yang dulu tampil "-" di Riwayat sekarang terisi.
+            Debug.Assert(muat.JumlahPanel == s.JumlahPanel, "jumlah panel hasil muat berbeda");
+            Debug.Assert(muat.KapasitasKwp is { } kap && Math.Abs(kap - s.KapasitasKwp!.Value) < 1e-9, "kapasitas hasil muat berbeda");
+            Debug.Assert(muat.BiayaInstalasi is { } biaya && Math.Abs(biaya - s.BiayaInstalasi!.Value) < 1e-3, "biaya instalasi hasil muat berbeda");
+            Debug.Assert(muat.Keuntungan25Tahun is { } untung && Math.Abs(untung - s.Keuntungan25Tahun!.Value) < 1e-3, "keuntungan 25 tahun hasil muat berbeda");
+            Debug.Assert(muat.ProduksiBulanan.Count == 12 && Math.Abs(muat.ProduksiBulanan.Sum() - s.ProduksiTahunan) < 1e-6,
+                "produksi bulanan hasil muat berbeda");
+
+            // Skenario dari database bisa dihitung ulang.
+            muat.jalankanSimulasi();
+            Debug.Assert(Math.Abs(muat.PaybackPeriod - s.PaybackPeriod) < 1e-6 && Math.Abs(muat.ProduksiTahunan - s.ProduksiTahunan) < 1e-6,
+                "hitung ulang skenario dari database menghasilkan angka berbeda");
+
+            // Menyimpan ulang mengganti isinya, tidak menggandakan baris input.
+            riwayat.tambahSkenario(s);
+            PeriksaJumlah(1, 1, 12, "setelah simpan ulang");
+
+            // Tagihan bulanan ikut tersimpan.
+            var denganTagihan = new SimulasiSkenario("Tagihan", s.Lokasi!, s.Panel!, s.DataRadiasi!,
+                                                     new AnalisisFinansial(15_000), s.Tarif!) { TagihanBulananKwh = 594 };
+            denganTagihan.jalankanSimulasi();
+            riwayat.tambahSkenario(denganTagihan);
+            Debug.Assert(repo.ambilById(denganTagihan.Id)?.TagihanBulananKwh == 594, "tagihan bulanan tidak tersimpan");
+            PeriksaJumlah(2, 2, 24, "dua skenario");
+
+            // Baris tanpa input (gaya lama) tetap bisa disimpan dan dibaca, tanpa rincian karangan.
+            var lama = new SimulasiSkenario("lama-uji", "Hanya hasil", DateTime.Now.AddDays(-2), 5000, 7_000_000, 8.5, 4000);
+            riwayat.tambahSkenario(lama);
+            var lamaMuat = repo.ambilById("lama-uji");
+            Debug.Assert(lamaMuat is not null && lamaMuat.Lokasi is null && lamaMuat.JumlahPanel is null && lamaMuat.BiayaInstalasi is null,
+                "skenario tanpa input tidak boleh punya rincian");
+            PeriksaJumlah(2, 2, 24, "setelah baris lama");
+
+            // Menghapus membersihkan input yang tidak dipakai lagi.
+            Debug.Assert(riwayat.hapusSkenario(s.Id) && riwayat.hapusSkenario(denganTagihan.Id) && riwayat.hapusSkenario("lama-uji"),
+                "hapus skenario gagal");
+            PeriksaJumlah(0, 0, 0, "setelah hapus");
+        }
+        finally
+        {
+            Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+            if (File.Exists(berkas)) File.Delete(berkas);
         }
     }
     private static void CekPenyimpanan(SimulasiSkenario s)

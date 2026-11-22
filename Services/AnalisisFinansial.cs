@@ -20,7 +20,8 @@ public class AnalisisFinansial
 
     private bool biayaSudahDihitung;
     private bool penghematanSudahDihitung;
-
+    public double BiayaPerWp => biayaPerWp;
+    public double DegradasiTahunan => degradasiTahunan;
         public AnalisisFinansial(double biayaPerWp, double degradasiTahunan = DegradasiBawaan)
     {
         this.biayaPerWp = biayaPerWp;
