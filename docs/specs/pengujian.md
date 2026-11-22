@@ -8,7 +8,7 @@ Pengujian otomatis untuk mesin hitung dan basis data (white box) terpisah, ada d
 |---|---|
 | **Nama Aplikasi** | SunCost, Kalkulator PLTS Atap |
 | **Tanggal Pengujian** | 22 November 2026 |
-| **Tester** | Muhammad Farrel Al Ghazy |
+| **Tester** | Sri Wahyuni Arista |
 
 **Hasil: 28 dari 28 kasus Sesuai, 0 Tidak Sesuai, 0 belum diuji. Pengujian dijalankan otomatis dengan Windows UI Automation (tests/uji-blackbox.ps1) pada build terbaru, mulai dari basis data kosong. Kondisi tanpa internet (C3 dan C4) disimulasikan khusus untuk proses SunCost lewat proxy yang tidak aktif, tanpa mematikan jaringan laptop.**
 
