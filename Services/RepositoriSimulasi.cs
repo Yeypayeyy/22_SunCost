@@ -228,6 +228,63 @@ public class RepositoriSimulasi
         tx.Commit();
     }
 
+    // ---- Data master -------------------------------------------------------------------------
+
+    // simpan() membuat baris panel/tarif baru ber-id "panel-"/"tarif-" + Guid 32 karakter untuk input
+    // yang belum ada (termasuk "Tarif manual"). Baris itu milik skenario, bukan pilihan dropdown.
+    private const string BukanBarisSkenario = "length(id) <> length($awalan) + 32";
+
+    /// <summary>Panel untuk dropdown Simulasi Baru: data awal BE-5 dan panel yang ditambahkan manual ke tabel.</summary>
+    public List<PanelSurya> ambilSemuaPanel()
+    {
+        using var db = BukaKoneksi();
+        using var cmd = Perintah(db, null, $"""
+            SELECT merk, kapasitas_wp, efisiensi, koefisien_suhu, luas_per_panel, harga_per_unit, jenis
+            FROM panel_surya WHERE {BukanBarisSkenario}
+            ORDER BY COALESCE(jenis, 'monokristalin') = 'thin_film', kapasitas_wp;
+            """, ("$awalan", "panel-"));
+        using var baca = cmd.ExecuteReader();
+        var daftar = new List<PanelSurya>();
+        while (baca.Read())
+        {
+            string merk = baca.GetString(0);
+            double wp = baca.GetDouble(1), ef = baca.GetDouble(2), koef = baca.GetDouble(3),
+                   luas = baca.GetDouble(4), harga = baca.GetDouble(5);
+            daftar.Add(!baca.IsDBNull(6) && baca.GetString(6) == "thin_film"
+                ? new PanelThinFilm(merk, wp, ef, koef, luas, harga)
+                : new PanelMonokristal(merk, wp, ef, koef, luas, harga));
+        }
+        return daftar;
+    }
+
+    /// <summary>Data awal tanpa membuka database, untuk dropdown kalau database tidak bisa dibaca.</summary>
+    public static List<PanelSurya> PanelBawaan() => PanelAwal
+        .Select(p => p.Jenis == "thin_film"
+            ? (PanelSurya)new PanelThinFilm(p.Merk, p.Wp, p.Efisiensi, p.KoefSuhu, p.LuasM2, p.Harga)
+            : new PanelMonokristal(p.Merk, p.Wp, p.Efisiensi, p.KoefSuhu, p.LuasM2, p.Harga))
+        .ToList();
+
+    /// <inheritdoc cref="PanelBawaan"/>
+    public static List<TarifListrikPLN> TarifBawaan() => TarifAwal
+        .Select(t => new TarifListrikPLN(t.Golongan, t.TarifPerKwh, Tanggal(TanggalTarifAwal)))
+        .ToList();
+
+    /// <summary>Golongan tarif PLN untuk dropdown Simulasi Baru, urut dari tarif termurah.</summary>
+    public List<TarifListrikPLN> ambilSemuaTarif()
+    {
+        using var db = BukaKoneksi();
+        using var cmd = Perintah(db, null, $"""
+            SELECT golongan, tarif_per_kwh, tanggal_berlaku
+            FROM tarif_listrik_pln WHERE {BukanBarisSkenario}
+            ORDER BY tarif_per_kwh, golongan;
+            """, ("$awalan", "tarif-"));
+        using var baca = cmd.ExecuteReader();
+        var daftar = new List<TarifListrikPLN>();
+        while (baca.Read())
+            daftar.Add(new TarifListrikPLN(baca.GetString(0), baca.GetDouble(1), Tanggal(baca.GetString(2))));
+        return daftar;
+    }
+
     // ---- Simpan -------------------------------------------------------------------------------
 
     /// <summary>

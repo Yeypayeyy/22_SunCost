@@ -354,6 +354,20 @@ Debug.Assert(skenario.Keuntungan25Tahun > 0, "keuntungan 25 tahun mestinya posit
             }
             PeriksaJumlah(1, 1, 12, "setelah simpan");
 
+            // Panel "Contoh 550" dan tarif manual ikut tersimpan sebagai baris milik skenario,
+            // tetapi tidak boleh muncul di dropdown Simulasi Baru.
+            var manual = new SimulasiSkenario("Manual", s.Lokasi!, s.Panel!, s.DataRadiasi!,
+                new AnalisisFinansial(15_000), new TarifListrikPLN("Tarif manual", 2000, DateTime.Today));
+            manual.jalankanSimulasi();
+            repo.simpan(manual);
+            Debug.Assert(repo.ambilSemuaPanel().Count == 3, "dropdown panel harus berisi 3 data awal saja");
+            Debug.Assert(repo.ambilSemuaTarif().Count == 4 && repo.ambilSemuaTarif().All(t => t.Golongan != "Tarif manual"),
+                "dropdown tarif harus berisi 4 golongan saja, tanpa tarif manual");
+            Debug.Assert(repo.ambilSemuaPanel().Any(p => p is PanelThinFilm), "dropdown harus memuat panel thin film");
+            Debug.Assert(RepositoriSimulasi.PanelBawaan().Count == 3 && RepositoriSimulasi.TarifBawaan().Count == 4,
+                "data bawaan harus sama jumlahnya dengan data awal database");
+            repo.hapus(manual.Id);
+
             // Skenario dirakit utuh dari database.
             var muat = repo.ambilById(s.Id);
             Debug.Assert(muat is not null && muat.Lokasi is not null && muat.Panel is not null
