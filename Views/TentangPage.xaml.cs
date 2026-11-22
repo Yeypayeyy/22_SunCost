@@ -2,6 +2,7 @@ using System.Reflection;
 using System.Windows.Controls;
 using System.Windows.Media;
 using SunCost.Models;
+using SunCost.Services;
 
 namespace SunCost.Views;
 
@@ -27,20 +28,20 @@ public partial class TentangPage : UserControl
 
         Konstanta.ItemsSource = new[]
         {
-            new Baris("Performance Ratio (PR)", AsumsiTampilan.PerformanceRatio.ToString("0.00", FormatId.Angka), tinta),
+            new Baris("Performance Ratio (PR)", KalkulatorEnergi.PerformanceRatio.ToString("0.00", FormatId.Angka), tinta),
             new Baris("Suhu sel saat penyinaran penuh",
-                      "suhu udara + " + AsumsiTampilan.KenaikanSuhuSel.ToString("0", FormatId.Angka) + " °C", tinta),
-            new Baris("Koreksi suhu", "berlaku di atas " + AsumsiTampilan.SuhuReferensi.ToString("0", FormatId.Angka) + " °C", tinta),
-            new Baris("Degradasi panel", "−" + Persen(AsumsiTampilan.DegradasiTahunan) + "% per tahun", tinta),
-            new Baris("Faktor pemanfaatan atap", (AsumsiTampilan.FaktorPemanfaatan * 100).ToString("0", FormatId.Angka) + "% dari luas total", tinta),
-            new Baris("Umur sistem", AsumsiTampilan.UmurSistemTahun + " tahun", tinta),
+                      "suhu udara + " + KalkulatorEnergi.KenaikanSuhuSel.ToString("0", FormatId.Angka) + " °C", tinta),
+            new Baris("Koreksi suhu", "berlaku di atas " + PanelSurya.SuhuReferensi.ToString("0", FormatId.Angka) + " °C", tinta),
+            new Baris("Degradasi panel", "−" + Persen(AnalisisFinansial.DegradasiBawaan) + "% per tahun", tinta),
+            new Baris("Faktor pemanfaatan atap", (Lokasi.FaktorPemanfaatan * 100).ToString("0", FormatId.Angka) + "% dari luas total", tinta),
+            new Baris("Umur sistem", AnalisisFinansial.UmurSistemTahun + " tahun", tinta),
         };
 
         Sumber.ItemsSource = new[]
         {
             new Baris("Radiasi & suhu", "Open-Meteo Archive", tinta),
             new Baris("Tarif listrik", "PLN / Permen ESDM", tinta),
-            new Baris("Faktor emisi CO₂", AsumsiTampilan.FaktorEmisiCO2.ToString("0.000", FormatId.Angka) + " kg/kWh", tinta),
+            new Baris("Faktor emisi CO₂", DampakLingkungan.FaktorEmisiBawaan.ToString("0.00", FormatId.Angka) + " kg/kWh", tinta),
             new Baris("Penyimpanan", "SQLite lokal", tinta),
         };
 
