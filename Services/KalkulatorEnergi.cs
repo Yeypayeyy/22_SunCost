@@ -10,7 +10,7 @@ public class KalkulatorEnergi
     private static readonly int[] HariPerBulan = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
 
     /// <summary>Kenaikan suhu sel di atas suhu udara saat penyinaran penuh (pendekatan NOCT).</summary>
-    private const double KenaikanSuhuSel = 25.0;
+    public const double KenaikanSuhuSel = 25.0;
 
         /// <summary>Performance Ratio: rugi inverter, kabel, kotoran, dan mismatch. Nilai mengikuti ADR 0001.</summary>
     public const double PerformanceRatio = 0.78;

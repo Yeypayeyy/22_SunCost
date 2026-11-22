@@ -25,28 +25,21 @@ public partial class SimulasiPage : UserControl
         public override string ToString() => Nama;
     }
 
-    private record PanelPilihan(string Label, bool ThinFilm, string Merk, double Wp, double Efisiensi,
-                                double KoefisienSuhu, double LuasPerPanel, double HargaPerUnit)
+    private record PanelPilihan(PanelSurya Panel)
     {
-        public override string ToString() => Label;
-
-        // Variabel bertipe PanelSurya: kalkulator memanggil hitungKoreksiSuhu milik jenis yang dipilih.
-        public PanelSurya Buat() => ThinFilm
-            ? new PanelThinFilm(Merk, Wp, Efisiensi, KoefisienSuhu, LuasPerPanel, HargaPerUnit)
-            : new PanelMonokristal(Merk, Wp, Efisiensi, KoefisienSuhu, LuasPerPanel, HargaPerUnit);
+        public override string ToString() => Panel.Merk;
     }
 
-    private record TarifPilihan(string Golongan, double PerKWh)
+    private record TarifPilihan(TarifListrikPLN Tarif)
     {
         public override string ToString() =>
-            Golongan + " · Rp " + PerKWh.ToString("#,##0.00", FormatId.Angka) + " / kWh";
+            Tarif.Golongan + " · Rp " + Tarif.getTarifPerKWh().ToString("#,##0.00", FormatId.Angka) + " / kWh";
     }
 
     private record Baris(string Label, string Nilai);
 
-    // ponytail: data master sementara di kode. Ganti dengan isi tabel panel_surya dan
-    // tarif_listrik_pln setelah BE-5. Lokasi bisa ditingkatkan ke Open-Meteo Geocoding API
-    // (gratis, tanpa key) kalau daftar kota ini terasa sempit.
+    // ponytail: daftar kota tetap di kode. Bisa ditingkatkan ke Open-Meteo Geocoding API
+    // (gratis, tanpa key) kalau daftar ini terasa sempit.
     private static readonly LokasiPilihan[] DaftarLokasi =
     {
         new("Sleman, Daerah Istimewa Yogyakarta", -7.7326, 110.3800),
@@ -69,32 +62,30 @@ public partial class SimulasiPage : UserControl
         new("Selatan", 180), new("Barat Daya", 225), new("Barat", 270), new("Barat Laut", 315),
     };
 
-    private static readonly PanelPilihan[] DaftarPanel =
-    {
-        new("Monokristalin 420 Wp", false, "Mono 420", 420, 21.5, 0.35, 1.95, 2_300_000),
-        new("Monokristalin 550 Wp", false, "Mono 550", 550, 21.3, 0.40, 2.60, 2_750_000),
-        new("Thin film (a-Si) 150 Wp", true, "Thin film 150", 150, 10.0, 0.20, 1.43, 1_200_000),
-    };
+    private static readonly RepositoriSimulasi? repositori = BukaRepositori();
+    private readonly LayananCuacaAPI cuaca = new(repositori);
 
-    private static readonly TarifPilihan[] DaftarTarif =
-    {
-        new("R-1 / 900 VA", 1352.00),
-        new("R-1 / 1300 VA", 1444.70),
-        new("R-1 / 2200 VA", 1444.70),
-        new("R-2 / 3500–5500 VA", 1699.53),
-        new("R-3 / 6600 VA ke atas", 1699.53),
-    };
-
-    /// <summary>Tanggal berlaku tarif di daftar di atas (penyesuaian tarif PLN triwulan I 2025).</summary>
-    private static readonly DateTime TarifBerlaku = new(2025, 1, 1);
-
-    private readonly LayananCuacaAPI cuaca = new(BukaCache());
-
-    /// <summary>Database untuk cache radiasi (BE-4). Kalau tidak bisa dibuka, simulasi tetap jalan lewat API.</summary>
-    private static RepositoriSimulasi? BukaCache()
+    /// <summary>Database untuk data master dan cache radiasi. Kalau tidak bisa dibuka, halaman tetap jalan.</summary>
+    private static RepositoriSimulasi? BukaRepositori()
     {
         try { return new RepositoriSimulasi(); }
         catch (Exception e) when (e is SqliteException or IOException or UnauthorizedAccessException) { return null; }
+    }
+
+    /// <summary>Isi dropdown panel dan tarif dari database (BE-5); data awal yang sama bila database tidak terbaca.</summary>
+    private static (List<PanelSurya> Panel, List<TarifListrikPLN> Tarif) MuatDataMaster()
+    {
+        try
+        {
+            if (repositori is not null)
+            {
+                var panel = repositori.ambilSemuaPanel();
+                var tarif = repositori.ambilSemuaTarif();
+                if (panel.Count > 0 && tarif.Count > 0) return (panel, tarif);
+            }
+        }
+        catch (Exception e) when (e is SqliteException or InvalidOperationException or FormatException) { }
+        return (RepositoriSimulasi.PanelBawaan(), RepositoriSimulasi.TarifBawaan());
     }
     private DataRadiasi? radiasi;
     private Task<DataRadiasi>? pengambilan;
@@ -111,12 +102,13 @@ public partial class SimulasiPage : UserControl
 
         LokasiBox.ItemsSource = DaftarLokasi;
         ArahBox.ItemsSource = DaftarArah;
-        PanelBox.ItemsSource = DaftarPanel;
-        TarifBox.ItemsSource = DaftarTarif;
+        var (daftarPanel, daftarTarif) = MuatDataMaster();
+        PanelBox.ItemsSource = daftarPanel.Select(p => new PanelPilihan(p)).ToArray();
+        TarifBox.ItemsSource = daftarTarif.Select(t => new TarifPilihan(t)).ToArray();
         LokasiBox.SelectedIndex = 0;
         ArahBox.SelectedIndex = 0;
         PanelBox.SelectedIndex = 0;
-        TarifBox.SelectedIndex = 1;
+        TarifBox.SelectedIndex = Math.Min(1, daftarTarif.Count - 1);
 
         foreach (var box in new[] { NamaBox, LuasBox, BiayaBox, TagihanBox, TarifManualBox })
         {
@@ -154,8 +146,7 @@ public partial class SimulasiPage : UserControl
     {
         if (TarifManualCek.IsChecked == true)
             return new TarifListrikPLN("Tarif manual", Angka(TarifManualBox) ?? 0, DateTime.Today);
-        var t = (TarifPilihan)TarifBox.SelectedItem;
-        return new TarifListrikPLN(t.Golongan, t.PerKWh, TarifBerlaku);
+        return ((TarifPilihan)TarifBox.SelectedItem).Tarif;
     }
 
     /// <summary>Pemakaian bulanan pengguna (kWh). Belum punya penerima, lihat catatan kontrak B1.</summary>
@@ -209,8 +200,7 @@ public partial class SimulasiPage : UserControl
 
     private void PerbaruiEstimasi()
     {
-        var spek = PanelDipilih;
-        PanelSurya panel = spek.Buat();
+        PanelSurya panel = PanelDipilih.Panel;
         double? luas = Angka(LuasBox);
         double? biayaPerWp = Angka(BiayaBox);
 
@@ -237,7 +227,7 @@ public partial class SimulasiPage : UserControl
                   + (radiasi.AdalahCadangan ? " · cadangan" : "");
             var kalkulator = new KalkulatorEnergi(BuatLokasi(1), panel, radiasi);
             double faktor = kalkulator.hitungKoreksiSuhu(radiasi.SuhuRataRata, panel);
-            double suhuSel = radiasi.SuhuRataRata + AsumsiTampilan.KenaikanSuhuSel;
+            double suhuSel = radiasi.SuhuRataRata + KalkulatorEnergi.KenaikanSuhuSel;
             koreksi = "−" + ((1 - faktor) * 100).ToString("0.0", FormatId.Angka) + "% (sel "
                       + suhuSel.ToString("0", FormatId.Angka) + " °C)";
         }
@@ -250,12 +240,12 @@ public partial class SimulasiPage : UserControl
         Estimasi.ItemsSource = new[]
         {
             new Baris("Jenis panel", panel.Jenis),
-            new Baris("Jumlah panel", jumlah is null ? "-" : $"{jumlah} unit × {spek.Wp:0} Wp"),
+            new Baris("Jumlah panel", jumlah is null ? "-" : $"{jumlah} unit × {panel.KapasitasWp:0} Wp"),
             new Baris("Luas terpakai", jumlah is null ? "-" :
-                (jumlah.Value * spek.LuasPerPanel).ToString("0.0", FormatId.Angka) + " m² dari "
+                (jumlah.Value * panel.LuasPerPanel).ToString("0.0", FormatId.Angka) + " m² dari "
                 + luas!.Value.ToString("0.#", FormatId.Angka) + " m²"),
             new Baris("Peak Sun Hours", psh),
-            new Baris("Performance Ratio", AsumsiTampilan.PerformanceRatio.ToString("0.00", FormatId.Angka)),
+            new Baris("Performance Ratio", KalkulatorEnergi.PerformanceRatio.ToString("0.00", FormatId.Angka)),
             new Baris("Koreksi suhu", koreksi),
             new Baris("Estimasi biaya instalasi", biaya),
         };
@@ -345,7 +335,7 @@ public partial class SimulasiPage : UserControl
             var skenario = new SimulasiSkenario(
                 NamaBox.Text.Trim(),
                 lokasi,
-                PanelDipilih.Buat(),
+                PanelDipilih.Panel,
                 data,
                 new AnalisisFinansial(Angka(BiayaBox)!.Value),
                 BuatTarif())
