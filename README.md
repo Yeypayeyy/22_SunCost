@@ -237,7 +237,23 @@ mencadangkan, dan mengosongkannya ada di
 
 ## Pengujian
 
-`Services/SelfCheck.cs` berisi 96 pemeriksaan `Debug.Assert`. Pemeriksaan ini berjalan otomatis
+**Black box (Modul 10):** 28 kasus uji untuk seluruh halaman, validasi, data cadangan, cache, dan
+instalasi ada di [docs/specs/pengujian.md](docs/specs/pengujian.md)
+([versi .docx](docs/pengujian-blackbox-suncost.docx)), dengan format Lab 10.2. Hasil terakhir:
+**28 Sesuai, 0 Tidak Sesuai**.
+
+Kasus uji itu dijalankan otomatis oleh [`tests/uji-blackbox.ps1`](tests/uji-blackbox.ps1) lewat Windows UI
+Automation: mengisi form, menekan tombol, dan membaca teks di layar seperti pengguna. Basis data pengguna
+dicadangkan lalu dikembalikan setelah pengujian.
+
+```powershell
+dotnet build
+```
+```powershell
+powershell -ExecutionPolicy Bypass -File tests/uji-blackbox.ps1
+```
+
+**White box:** `Services/SelfCheck.cs` berisi 96 pemeriksaan `Debug.Assert`. Pemeriksaan ini berjalan otomatis
 setiap kali aplikasi dibuka dalam build Debug (`dotnet run`). Kalau satu pemeriksaan gagal,
 aplikasi berhenti sebelum jendela terbuka, sehingga rumus yang rusak tidak lolos tanpa
 ketahuan.
@@ -266,6 +282,7 @@ SunCost/
 ├── Services/                mesin hitung, API cuaca, repositori SQLite, SelfCheck
 ├── Views/                   Beranda, Simulasi Baru, Hasil, Riwayat, Tentang
 ├── Assets/                  ikon aplikasi dan ilustrasi
+├── tests/                   uji black box otomatis (UI Automation)
 └── docs/
     ├── ERD.md               rancangan basis data dan DDL
     ├── panduan-basis-data.md
@@ -283,6 +300,7 @@ SunCost/
 |---|---|
 | [docs/ERD.md](docs/ERD.md) | Diagram, kardinalitas, dan DDL SQLite enam tabel |
 | [docs/panduan-basis-data.md](docs/panduan-basis-data.md) | Lokasi berkas, migrasi otomatis, cara melihat dan mencadangkan data |
+| [docs/specs/pengujian.md](docs/specs/pengujian.md) | 28 kasus uji black box (format Modul 10) |
 | [ADR 0001](docs/decisions/0001-asumsi-perhitungan.md) | Asumsi perhitungan yang dipakai dan alasannya |
 | [ADR 0002](docs/decisions/0002-database-sqlite.md) | Mengapa SQLite lokal, beserta alternatif yang ditimbang |
 | [docs/specs/layar-ui.md](docs/specs/layar-ui.md) | Peta frame Figma ke halaman WPF dan token desain |

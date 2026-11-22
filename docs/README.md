@@ -14,7 +14,7 @@
 
 | Orang | Peran | Tugas |
 |---|---|---|
-| Muhammad Farrel Al Ghazy | Software Architect + Frontend | FE-A: A1–A7 ✅, BE-3 ✅, BE-4 ✅, BE-6, keluaran Modul 10 |
+| Muhammad Farrel Al Ghazy | Software Architect + Frontend | FE-A: A1–A7 ✅, BE-3 ✅, BE-4 ✅, BE-6 ✅, keluaran Modul 10 |
 | Mayravivania Syahda Charisa | Frontend Developer | FE-B: B1–B6 ✅ |
 | Sri Wahyuni Arista | Backend Developer | BE-1 ✅, BE-2 ✅, BE-5 ✅, BE-7 ✅, BE-8 ✅ |
 
@@ -24,7 +24,7 @@ dikerjakan bersamaan tanpa konflik merge. Daftar kepemilikannya ada di
 
 ## Keadaan sekarang
 
-- **Seluruh tugas BE-1 sampai BE-8 dan FE A1–A7, B1–B6 sudah di `main`**, kecuali BE-6.
+- **Seluruh tugas BE-1 sampai BE-8 dan FE A1–A7, B1–B6 sudah di `main`.**
 - **Frontend:** Simulasi Baru (validasi, tarif manual, dropdown dari database), Hasil (Energi,
   Finansial & Lingkungan, state memuat dan data cadangan), Riwayat (lihat ulang, hapus, bandingkan,
   keadaan kosong), Beranda, dan Tentang (konstanta dibaca langsung dari mesin hitung).
@@ -35,9 +35,9 @@ dikerjakan bersamaan tanpa konflik merge. Daftar kepemilikannya ada di
 
 | Pemilik | Tugas |
 |---|---|
-| Farrel | BE-6 dokumen pengujian, panduan singkat penggunaan, slide demo |
-| Mayra | "Untung 25 thn" di kartu perbandingan Riwayat masih `-`; teks status Riwayat sudah basi; uji semua halaman |
-| Sri | Uji silang 3 skenario ke PVGIS; query agregasi untuk laporan Teknik Basis Data; uji `.exe` di laptop lain |
+| Farrel | panduan singkat penggunaan, slide demo |
+| Mayra | cek ulang tampilan secara manual (opsional) |
+| Sri | Uji silang 3 skenario ke PVGIS (opsional) |
 
 ## Keluaran wajib Modul 10
 
@@ -45,10 +45,10 @@ dikerjakan bersamaan tanpa konflik merge. Daftar kepemilikannya ada di
 |---|---|---|
 | Aplikasi final | semua | ✅ berjalan, fitur lengkap |
 | Layanan web API | Farrel | Open-Meteo sudah dipakai, sama dengan preseden kating (OpenWeatherMap) |
-| Dokumen pengujian | Farrel (BE-6) | belum |
+| Dokumen pengujian | Farrel (BE-6) | ✅ 28/28 Sesuai ([md](specs/pengujian.md), [docx](pengujian-blackbox-suncost.docx)), diuji otomatis lewat `tests/uji-blackbox.ps1` |
 | Panduan singkat penggunaan | Farrel | belum |
 | Panduan konfigurasi basis data | Farrel | ✅ [panduan-basis-data.md](panduan-basis-data.md) |
-| Pengemasan `.exe` | Farrel | ✅ satu berkas ±70 MB, perlu diuji di laptop lain |
+| Pengemasan `.exe` | Farrel | ✅ satu berkas ±70 MB, self-contained (runtime .NET ikut di dalamnya) |
 
 Perintah pengemasan satu berkas. `IncludeNativeLibrariesForSelfExtract` wajib, supaya library
 native SQLite ikut terbawa:
