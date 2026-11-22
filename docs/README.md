@@ -8,6 +8,7 @@
 | [plans/implementasi-be.md](plans/implementasi-be.md) | Pembagian kerja backend: BE-1 sampai BE-8 |
 | [decisions/0001-asumsi-perhitungan.md](decisions/0001-asumsi-perhitungan.md) | Tujuh angka asumsi yang bentrok antara Figma dan kode |
 | [decisions/0002-database-sqlite.md](decisions/0002-database-sqlite.md) | Basis data tetap SQLite lokal, beserta alternatif yang ditimbang |
+| [panduan-penggunaan.md](panduan-penggunaan.md) | Panduan singkat penggunaan (keluaran Modul 10) |
 | [panduan-basis-data.md](panduan-basis-data.md) | Panduan konfigurasi basis data (keluaran Modul 10) |
 
 ## Pembagian tugas
@@ -35,7 +36,7 @@ dikerjakan bersamaan tanpa konflik merge. Daftar kepemilikannya ada di
 
 | Pemilik | Tugas |
 |---|---|
-| Farrel | panduan singkat penggunaan, slide demo |
+| Farrel | slide demo |
 | Mayra | cek ulang tampilan secara manual (opsional) |
 | Sri | Uji silang 3 skenario ke PVGIS (opsional) |
 
@@ -46,7 +47,7 @@ dikerjakan bersamaan tanpa konflik merge. Daftar kepemilikannya ada di
 | Aplikasi final | semua | ✅ berjalan, fitur lengkap |
 | Layanan web API | Farrel | Open-Meteo sudah dipakai, sama dengan preseden kating (OpenWeatherMap) |
 | Dokumen pengujian | Farrel (BE-6) | ✅ 28/28 Sesuai ([md](specs/pengujian.md), [docx](pengujian-blackbox-suncost.docx)), diuji otomatis lewat `tests/uji-blackbox.ps1` |
-| Panduan singkat penggunaan | Farrel | belum |
+| Panduan singkat penggunaan | Farrel | ✅ [panduan-penggunaan.md](panduan-penggunaan.md), [docx](panduan-penggunaan-suncost.docx) |
 | Panduan konfigurasi basis data | Farrel | ✅ [panduan-basis-data.md](panduan-basis-data.md) |
 | Pengemasan `.exe` | Farrel | ✅ satu berkas ±70 MB, self-contained (runtime .NET ikut di dalamnya) |
 

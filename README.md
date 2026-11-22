@@ -190,9 +190,14 @@ Basis data memakai enam tabel ([ERD](docs/ERD.md)): `lokasi`, `panel_surya`,
 
 ## Menjalankan aplikasi
 
+Cara memakai aplikasinya, dari membuat simulasi sampai membandingkan skenario, ada di
+**[Panduan Singkat Penggunaan](docs/panduan-penggunaan.md)**.
+
 ### Pilihan 1: jalankan `.exe` (tanpa memasang apa pun)
 
-1. Ambil `SunCost.exe` hasil build (lihat [pilihan 3](#pilihan-3-membuat-exe-sendiri)).
+1. Unduh `SunCost.exe` dari
+   **[Google Drive](https://drive.google.com/drive/folders/1wCXNIXoPnkeKbIHItzoQTkbPpI5dSw_Y?usp=sharing)**,
+   atau build sendiri (lihat [pilihan 3](#pilihan-3-membuat-exe-sendiri)).
 2. Klik dua kali. Kalau Windows SmartScreen muncul, pilih **More info → Run anyway**, karena
    berkasnya belum ditandatangani.
 
@@ -299,6 +304,7 @@ SunCost/
 | Dokumen | Isi |
 |---|---|
 | [docs/ERD.md](docs/ERD.md) | Diagram, kardinalitas, dan DDL SQLite enam tabel |
+| [docs/panduan-penggunaan.md](docs/panduan-penggunaan.md) | Panduan singkat penggunaan, langkah demi langkah dengan screenshot ([.docx](docs/panduan-penggunaan-suncost.docx)) |
 | [docs/panduan-basis-data.md](docs/panduan-basis-data.md) | Lokasi berkas, migrasi otomatis, cara melihat dan mencadangkan data |
 | [docs/specs/pengujian.md](docs/specs/pengujian.md) | 28 kasus uji black box (format Modul 10) |
 | [ADR 0001](docs/decisions/0001-asumsi-perhitungan.md) | Asumsi perhitungan yang dipakai dan alasannya |
