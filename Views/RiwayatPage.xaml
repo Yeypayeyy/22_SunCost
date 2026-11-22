@@ -121,9 +121,18 @@
               </DataGridTextColumn.ElementStyle>
             </DataGridTextColumn>
             <DataGridTextColumn Header="Tanggal" Binding="{Binding Tanggal}" Width="1.2*" MinWidth="105" IsReadOnly="True"/>
-              <DataGridTemplateColumn Header="Aksi" Width="72" IsReadOnly="True">
+              <DataGridTemplateColumn Header="Aksi" Width="88" IsReadOnly="True">
                 <DataGridTemplateColumn.CellTemplate>
                     <DataTemplate>
+                      <StackPanel Orientation="Horizontal">
+                        <Button Width="34" Height="30"
+                                Background="Transparent" BorderThickness="0"
+                                Foreground="{StaticResource AccentBrush}"
+                                Click="Lihat_Click"
+                                ToolTip="Lihat hasil (Energi, Finansial, Lingkungan)"
+                                AutomationProperties.Name="Lihat hasil skenario">
+                            <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE890;"/>
+                        </Button>
                         <Button Width="34" Height="30"
                                 Background="Transparent" BorderThickness="0"
                                 Foreground="{StaticResource DangerBrush}"
@@ -132,6 +141,7 @@
                                 AutomationProperties.Name="Hapus skenario">
                             <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE74D;"/>
                         </Button>
+                      </StackPanel>
                     </DataTemplate>
                 </DataGridTemplateColumn.CellTemplate>
             </DataGridTemplateColumn>

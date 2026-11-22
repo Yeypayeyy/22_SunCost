@@ -361,6 +361,50 @@ public class RepositoriSimulasi
         return id;
     }
 
+    /// <summary>
+    /// Data radiasi API terbaru untuk koordinat ini yang diambil sejak <paramref name="sejak"/>, atau null.
+    /// Data cadangan tidak pernah dipakai ulang supaya lokasi itu dicoba lagi ke API pada simulasi berikutnya.
+    /// </summary>
+    public DataRadiasi? cariDataRadiasi(double latitude, double longitude, DateTime sejak)
+    {
+        using var db = BukaKoneksi();
+        string id, sumber;
+        double suhu;
+        DateTime diambil;
+        // ponytail: ORDER BY teks tanggal; benar selama semua baris ditulis dengan zona waktu yang sama.
+        using (var cmd = Perintah(db, null, """
+            SELECT d.id, d.suhu_rata_rata, d.sumber_data, d.tanggal_ambil
+            FROM data_radiasi d JOIN lokasi l ON l.id = d.lokasi_id
+            WHERE abs(l.latitude - $lat) < 1e-6 AND abs(l.longitude - $lon) < 1e-6
+              AND d.sumber_data NOT LIKE 'Cadangan%'
+            ORDER BY d.tanggal_ambil DESC
+            LIMIT 1;
+            """, ("$lat", latitude), ("$lon", longitude)))
+        using (var baca = cmd.ExecuteReader())
+        {
+            if (!baca.Read()) return null;
+            id = baca.GetString(0);
+            suhu = baca.GetDouble(1);
+            sumber = baca.GetString(2);
+            diambil = Tanggal(baca.GetString(3));
+        }
+        if (diambil < sejak) return null;
+
+        var bulanan = new double[12];
+        int terisi = 0;
+        using (var cmd = Perintah(db, null,
+            "SELECT bulan, peak_sun_hours FROM radiasi_bulanan WHERE data_radiasi_id = $id;", ("$id", id)))
+        using (var baca = cmd.ExecuteReader())
+        {
+            while (baca.Read())
+            {
+                bulanan[baca.GetInt32(0) - 1] = baca.GetDouble(1);
+                terisi++;
+            }
+        }
+        return terisi == 12 ? new DataRadiasi(bulanan.ToList(), suhu, sumber, diambil) : null;
+    }
+
     // ---- Muat ---------------------------------------------------------------------------------
 
     // Satu query dengan LEFT JOIN: baris lama (FK kosong) tetap muncul dengan kolom input bernilai NULL.

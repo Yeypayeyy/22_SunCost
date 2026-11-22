@@ -118,7 +118,47 @@ Debug.Assert(skenario.Keuntungan25Tahun > 0, "keuntungan 25 tahun mestinya posit
         CekSkemaPenuh();
         CekDataAwal();
         CekInputSkenario(skenario);
+        CekCacheRadiasi(lokasi, panel, tarif);
         CekTampilanRiwayat();
+    }
+
+    /// <summary>BE-4: data API kurang dari 30 hari dipakai ulang; data lama dan data cadangan tidak.</summary>
+    private static void CekCacheRadiasi(Lokasi lokasi, PanelSurya panel, TarifListrikPLN tarif)
+    {
+        string berkas = Path.Combine(Path.GetTempPath(), $"suncost-cache-{Guid.NewGuid():N}.db");
+        try
+        {
+            var repo = new RepositoriSimulasi(berkas);
+            // Port 9 di localhost menolak koneksi: kalau layanan menyentuh jaringan, hasilnya data cadangan.
+            var cuaca = new LayananCuacaAPI(repo, "http://127.0.0.1:9/", timeoutDetik: 2);
+            var lain = new Lokasi("Lain", -6.2, 106.8, 40, 0, 15);
+            void Simpan(string nama, string sumber, DateTime diambil)
+            {
+                var r = new DataRadiasi(Enumerable.Repeat(5.1, 12).ToList(), 28, sumber, diambil);
+                var s = new SimulasiSkenario(nama, lokasi, panel, r, new AnalisisFinansial(15_000), tarif);
+                s.jalankanSimulasi();
+                repo.simpan(s);
+            }
+
+            Debug.Assert(cuaca.ambilDataRadiasi(lokasi).AdalahCadangan, "tanpa cache dan tanpa jaringan harus cadangan");
+
+            Simpan("lama", "Open-Meteo Archive API", DateTime.Now.AddDays(-31));
+            Debug.Assert(cuaca.ambilDataRadiasi(lokasi).AdalahCadangan, "data lebih dari 30 hari tidak boleh dipakai");
+
+            Simpan("cadangan", "Cadangan (rata-rata Indonesia)", DateTime.Now);
+            Debug.Assert(cuaca.ambilDataRadiasi(lokasi).AdalahCadangan, "data cadangan tidak boleh dianggap cache");
+
+            Simpan("baru", "Open-Meteo Archive API", DateTime.Now.AddDays(-2));
+            var hasil = cuaca.ambilDataRadiasi(lokasi);
+            Debug.Assert(!hasil.AdalahCadangan && hasil.getPeakSunHours(6) == 5.1 && hasil.SuhuRataRata == 28,
+                "data API kurang dari 30 hari harus dibaca dari database");
+            Debug.Assert(cuaca.ambilDataRadiasi(lain).AdalahCadangan, "koordinat lain tidak boleh memakai cache lokasi ini");
+        }
+        finally
+        {
+            Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+            if (File.Exists(berkas)) File.Delete(berkas);
+        }
     }
 
     /// <summary>

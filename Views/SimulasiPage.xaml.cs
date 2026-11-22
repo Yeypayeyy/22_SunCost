@@ -88,7 +88,14 @@ public partial class SimulasiPage : UserControl
     /// <summary>Tanggal berlaku tarif di daftar di atas (penyesuaian tarif PLN triwulan I 2025).</summary>
     private static readonly DateTime TarifBerlaku = new(2025, 1, 1);
 
-    private readonly LayananCuacaAPI cuaca = new();
+    private readonly LayananCuacaAPI cuaca = new(BukaCache());
+
+    /// <summary>Database untuk cache radiasi (BE-4). Kalau tidak bisa dibuka, simulasi tetap jalan lewat API.</summary>
+    private static RepositoriSimulasi? BukaCache()
+    {
+        try { return new RepositoriSimulasi(); }
+        catch (Exception e) when (e is SqliteException or IOException or UnauthorizedAccessException) { return null; }
+    }
     private DataRadiasi? radiasi;
     private Task<DataRadiasi>? pengambilan;
     private int urutanAmbil;
@@ -175,8 +182,7 @@ public partial class SimulasiPage : UserControl
         var t = TempatDipilih;
         var lokasi = new Lokasi(t.Nama, t.Lat, t.Lon, 1, 0, 0);
 
-        // ponytail: membungkus method sinkron dengan Task.Run. Ganti ke ambilDataRadiasiAsync setelah BE-3.
-        pengambilan = Task.Run(() => cuaca.ambilDataRadiasi(lokasi));
+        pengambilan = cuaca.ambilDataRadiasiAsync(lokasi);
         Berubah();
         try
         {
@@ -334,7 +340,7 @@ public partial class SimulasiPage : UserControl
             jendela?.Buka(halamanHasil);
 
             var data = radiasi ??
-                await (pengambilan ?? Task.Run(() => cuaca.ambilDataRadiasi(lokasi)));
+                await (pengambilan ?? cuaca.ambilDataRadiasiAsync(lokasi));
 
             var skenario = new SimulasiSkenario(
                 NamaBox.Text.Trim(),

@@ -4,7 +4,9 @@ using System.Globalization;
 using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Data.Sqlite;
 using SunCost.Models;
 
 namespace SunCost.Services;
@@ -12,26 +14,41 @@ namespace SunCost.Services;
 /// <summary>
 /// Mengambil data iklim satu tahun terakhir dari Open-Meteo Archive API (gratis, tanpa API key).
 /// shortwave_radiation_sum (MJ/m2/hari) dibagi 3,6 menjadi Peak Sun Hours (kWh/m2/hari).
+/// Data yang pernah diambil untuk koordinat yang sama dan belum lebih dari 30 hari dibaca dari database.
 /// </summary>
 public class LayananCuacaAPI
 {
-    private string baseUrl;
-    private HttpClient httpClient;
-    private int timeoutDetik;
+    /// <summary>Batas umur data radiasi tersimpan sebelum diambil ulang dari API.</summary>
+    public static readonly TimeSpan UmurCache = TimeSpan.FromDays(30);
 
-    public LayananCuacaAPI(string baseUrl = "https://archive-api.open-meteo.com/v1/archive", int timeoutDetik = 20)
+    // Satu HttpClient untuk seluruh aplikasi supaya socket tidak habis. Batas waktu diatur per permintaan.
+    private static readonly HttpClient httpClient = new() { Timeout = Timeout.InfiniteTimeSpan };
+
+    private string baseUrl;
+    private int timeoutDetik;
+    private readonly RepositoriSimulasi? cache;
+
+    /// <summary>Tanpa <paramref name="cache"/>, setiap pemanggilan langsung ke API.</summary>
+    public LayananCuacaAPI(RepositoriSimulasi? cache = null,
+                           string baseUrl = "https://archive-api.open-meteo.com/v1/archive", int timeoutDetik = 20)
     {
+        this.cache = cache;
         this.baseUrl = baseUrl;
         this.timeoutDetik = timeoutDetik;
-        httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(timeoutDetik) };
     }
+
+    /// <summary>Bentuk sinkron sesuai class diagram. Jangan dipanggil dari thread UI; pakai versi async.</summary>
+    public DataRadiasi ambilDataRadiasi(Lokasi lokasi) => ambilDataRadiasiAsync(lokasi).GetAwaiter().GetResult();
 
     /// <summary>
     /// Rata-rata Peak Sun Hours per bulan dan suhu rata-rata setahun terakhir. Kalau API tidak dapat
     /// dihubungi, dikembalikan nilai cadangan rata-rata Indonesia supaya simulasi tetap berjalan.
     /// </summary>
-    public DataRadiasi ambilDataRadiasi(Lokasi lokasi)
+    public async Task<DataRadiasi> ambilDataRadiasiAsync(Lokasi lokasi)
     {
+        if (BacaCache(lokasi) is { } tersimpan)
+            return tersimpan;
+
         var sampai = DateTime.UtcNow.Date.AddDays(-7); // arsip tertinggal beberapa hari
         var dari = sampai.AddYears(-1).AddDays(1);
         string[] koordinat = lokasi.getKoordinat().Split(',');
@@ -40,8 +57,8 @@ public class LayananCuacaAPI
                      "&daily=shortwave_radiation_sum,temperature_2m_mean&timezone=auto";
         try
         {
-            // Diagram mendefinisikan method sinkron; HttpClient aman ditunggu karena tidak kembali ke thread UI.
-            string json = httpClient.GetStringAsync(url).GetAwaiter().GetResult();
+            using var batas = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutDetik));
+            string json = await httpClient.GetStringAsync(url, batas.Token).ConfigureAwait(false);
             using var dokumen = JsonDocument.Parse(json);
             var harian = dokumen.RootElement.GetProperty("daily");
             var waktu = harian.GetProperty("time");
@@ -87,13 +104,31 @@ public class LayananCuacaAPI
     {
         try
         {
+            using var batas = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutDetik));
             using var permintaan = new HttpRequestMessage(HttpMethod.Head, baseUrl);
-            using var balasan = httpClient.Send(permintaan);
+            using var balasan = httpClient.Send(permintaan, batas.Token);
             return (int)balasan.StatusCode < 500;
         }
         catch (Exception e) when (e is HttpRequestException or TaskCanceledException)
         {
             return false;
+        }
+    }
+
+    /// <summary>
+    /// Data radiasi tersimpan yang masih berlaku, atau null. Database yang gagal dibaca tidak boleh
+    /// menghentikan simulasi, jadi kegagalan diperlakukan sebagai "tidak ada cache".
+    /// </summary>
+    private DataRadiasi? BacaCache(Lokasi lokasi)
+    {
+        if (cache is null) return null;
+        try
+        {
+            return cache.cariDataRadiasi(lokasi.Latitude, lokasi.Longitude, DateTime.Now - UmurCache);
+        }
+        catch (Exception e) when (e is SqliteException or InvalidOperationException or FormatException or ArgumentException)
+        {
+            return null;
         }
     }
 
