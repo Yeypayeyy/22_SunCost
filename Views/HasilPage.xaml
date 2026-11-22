@@ -207,8 +207,31 @@
             <Border Style="{StaticResource Card}" Padding="20" Margin="0,16,0,0">
                 <StackPanel>
                     <TextBlock Text="Arus Kas Kumulatif 25 Tahun" FontWeight="SemiBold"/>
-                    <TextBlock Text="Proyeksi arus kas belum tersedia."
-                   Margin="0,8,0,0" Foreground="{StaticResource MutedBrush}"/>
+                        <TextBlock x:Name="StatusArusKas"
+           Text="Proyeksi arus kas belum tersedia."
+           Margin="0,8,0,0"
+           Foreground="{StaticResource MutedBrush}"/>
+
+                        <StackPanel x:Name="PanelGrafikArusKas" Visibility="Collapsed">
+                            <TextBlock x:Name="RentangArusKas" Margin="0,8,0,0"
+               Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap"/>
+
+                            <Viewbox Stretch="Uniform" StretchDirection="DownOnly" Margin="0,12,0,0">
+                                <Canvas Width="560" Height="200">
+                                    <Line x:Name="GarisNol" X1="12" X2="548"
+                  Stroke="{StaticResource MutedBrush}" StrokeDashArray="4 4"/>
+                                    <Polyline x:Name="GarisArusKas"
+                      Stroke="{StaticResource AccentBrush}" StrokeThickness="2.5"/>
+                                    <Ellipse x:Name="TitikBalikModal" Width="10" Height="10"
+                     Fill="{StaticResource AccentBrush}" Visibility="Collapsed"/>
+                                </Canvas>
+                            </Viewbox>
+
+                            <DockPanel Margin="0,6,0,0">
+                                <TextBlock DockPanel.Dock="Right" Text="Tahun 25"/>
+                                <TextBlock Text="Tahun 0"/>
+                            </DockPanel>
+                        </StackPanel> Margin="0,8,0,0" Foreground="{StaticResource MutedBrush}"/>
                 </StackPanel>
             </Border>
 
@@ -217,7 +240,9 @@
                     <TextBlock Text="Dampak Lingkungan" FontWeight="SemiBold"/>
                     <TextBlock x:Name="EmisiTahunan" Margin="0,8,0,0" TextWrapping="Wrap"/>
                     <TextBlock x:Name="SetaraPohon" Margin="0,6,0,0" TextWrapping="Wrap"/>
-                </StackPanel>
+                        <TextBlock x:Name="SetaraKmMobil" Margin="0,6,0,0" TextWrapping="Wrap"/>
+                        <TextBlock x:Name="TotalEmisi25Tahun" Margin="0,6,0,0" TextWrapping="Wrap"/>
+                    </StackPanel>
             </Border>
         </StackPanel>
     </ScrollViewer>

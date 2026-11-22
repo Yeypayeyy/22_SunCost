@@ -162,15 +162,68 @@ public partial class HasilPage : UserControl
         new MetrikFinansial("Hemat per bulan", Rupiah(skenario.PenghematanTahunan / 12)),
         new MetrikFinansial("Balik modal", balikModal),
         new MetrikFinansial("Keuntungan bersih 25 tahun", Rupiah(skenario.Keuntungan25Tahun))
-    };
+        };
 
+        var dampak = new DampakLingkungan();
         double emisi = skenario.EmisiDihindari;
-        int pohon = new DampakLingkungan().setaraPohon(emisi);
 
         EmisiTahunan.Text =
             $"{emisi.ToString("#,##0", FormatId.Angka)} kg CO₂ dihindari per tahun";
         SetaraPohon.Text =
-            $"Setara {pohon.ToString("#,##0", FormatId.Angka)} pohon";
+            $"Setara {dampak.setaraPohon(emisi).ToString("#,##0", FormatId.Angka)} pohon";
+        SetaraKmMobil.Text =
+            $"Setara {dampak.setaraKilometerMobil(emisi).ToString("#,##0", FormatId.Angka)} km perjalanan mobil";
+
+        TotalEmisi25Tahun.Text = skenario.DegradasiTahunan is double degradasi
+            ? $"{dampak.totalEmisi25Tahun(skenario.ProduksiTahunan, degradasi).ToString("#,##0", FormatId.Angka)} kg CO₂ dihindari dalam 25 tahun"
+            : "Total emisi dihindari dalam 25 tahun: —";
+
+        TampilkanGrafikArusKas(skenario);
+    }
+
+    private void TampilkanGrafikArusKas(SimulasiSkenario skenario)
+    {
+        var arusKas = skenario.ArusKasKumulatif;
+
+        PanelGrafikArusKas.Visibility = Visibility.Collapsed;
+        StatusArusKas.Visibility = Visibility.Visible;
+        TitikBalikModal.Visibility = Visibility.Collapsed;
+
+        if (arusKas is null || arusKas.Count != AnalisisFinansial.UmurSistemTahun + 1 ||
+            arusKas.Any(nilai => !double.IsFinite(nilai)))
+            return;
+
+        double minimum = Math.Min(0, arusKas.Min());
+        double maksimum = Math.Max(0, arusKas.Max());
+        double rentang = maksimum - minimum;
+
+        double PosisiX(double tahun) => 12 + tahun / (arusKas.Count - 1) * 536;
+        double PosisiY(double nilai) => rentang > 0
+            ? 12 + (maksimum - nilai) / rentang * 176
+            : 100;
+
+        GarisArusKas.Points = new PointCollection(
+            arusKas.Select((nilai, tahun) =>
+                new Point(PosisiX(tahun), PosisiY(nilai))));
+
+        double posisiNol = PosisiY(0);
+        GarisNol.Y1 = posisiNol;
+        GarisNol.Y2 = posisiNol;
+
+        double balikModal = skenario.PaybackPeriod;
+        if (double.IsFinite(balikModal) &&
+            balikModal >= 0 && balikModal <= AnalisisFinansial.UmurSistemTahun)
+        {
+            Canvas.SetLeft(TitikBalikModal, PosisiX(balikModal) - TitikBalikModal.Width / 2);
+            Canvas.SetTop(TitikBalikModal, posisiNol - TitikBalikModal.Height / 2);
+            TitikBalikModal.ToolTip =
+                $"Balik modal: {balikModal.ToString("0.0", FormatId.Angka)} tahun";
+            TitikBalikModal.Visibility = Visibility.Visible;
+        }
+
+        RentangArusKas.Text = $"{Rupiah(minimum)} hingga {Rupiah(maksimum)} · garis putus-putus = Rp 0";
+        StatusArusKas.Visibility = Visibility.Collapsed;
+        PanelGrafikArusKas.Visibility = Visibility.Visible;
     }
 
     private record AsumsiTampilan(string Nama, string Nilai, string Keterangan);
