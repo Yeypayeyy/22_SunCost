@@ -18,8 +18,12 @@ public partial class RiwayatPage : UserControl
     {
         public SimulasiSkenario Skenario { get; }
         public string Nama => Skenario.Nama;
-        public string Luas { get; init; } = "-";
-        public string Kapasitas { get; init; } = "-";
+        public string Luas => Skenario.Lokasi is { } lokasi
+            ? $"{lokasi.LuasAtap.ToString("0.##", FormatId.Angka)} m²"
+            : "-";
+        public string Kapasitas => Skenario.KapasitasKwp is double kapasitas
+            ? $"{kapasitas.ToString("0.##", FormatId.Angka)} kWp"
+            : "-";
         public string Judul { get; init; }
         public string Keterangan { get; init; } = "Data riwayat tersimpan";
         public string Untung { get; init; } = "-";
