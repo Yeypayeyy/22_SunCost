@@ -27,7 +27,8 @@ public partial class RiwayatPage : UserControl
         public string Judul { get; init; }
         public string Keterangan { get; init; } = "Data riwayat tersimpan";
         public string Untung => Skenario.Keuntungan25Tahun is double untung
-            ? "Rp " + untung.ToString("#,##0", FormatId.Angka) : "-";
+            ? $"Rp {untung.ToString("#,##0", FormatId.Angka)}"
+            : "-";
         public string Produksi => Skenario.ProduksiTahunan.ToString("#,##0", FormatId.Angka) + " kWh";
         public string Payback => double.IsFinite(Skenario.PaybackPeriod)
             ? Skenario.PaybackPeriod.ToString("0.0", FormatId.Angka) + " tahun" : "Tidak balik modal";
@@ -67,9 +68,11 @@ public partial class RiwayatPage : UserControl
             daftar = riwayat.muatRiwayat().Select(s => new Baris(s)).ToList();
             Tabel.ItemsSource = daftar.ToArray();
 
-            // Hanya skenario lama (sebelum input disimpan) yang tidak punya luas, kapasitas, dan keuntungan.
-            Status.Text = daftar.Any(b => b.Skenario.Lokasi is null)
-                ? "Skenario lama tidak menyimpan input, jadi luas atap, kapasitas, dan keuntungan 25 tahunnya tampil -."
+            Status.Text = daftar.Any(baris =>
+                baris.Skenario.Lokasi is null ||
+                !baris.Skenario.KapasitasKwp.HasValue ||
+                !baris.Skenario.Keuntungan25Tahun.HasValue)
+                ? "Skenario lama mungkin belum memiliki detail lengkap."
                 : "";
 
             PerbaruiKeadaanRiwayat();
