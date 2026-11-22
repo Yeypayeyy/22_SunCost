@@ -14,7 +14,7 @@ Basis data: **SQLite lokal**, lihat [ADR 0002](../decisions/0002-database-sqlite
 | BE-3 · Layanan cuaca asinkron | **Farrel** | ✅ selesai |
 | BE-4 · Cache data radiasi | **Farrel** | ✅ selesai |
 | BE-5 · Data master awal | Sri | ✅ selesai, dropdown membaca database |
-| BE-6 · Dokumen pengujian Modul 10 | **Farrel** | belum |
+| BE-6 · Dokumen pengujian Modul 10 | **Farrel** | ✅ kasus uji siap, hasil diisi saat pengujian |
 | BE-7 · Tiga method tab Finansial | Sri | ✅ selesai |
 | BE-8 · Menyelaraskan konstanta | Sri | ✅ selesai |
 
@@ -146,6 +146,11 @@ aplikasi dibuka.
 **Selesai bila:** database baru langsung punya isi dropdown tanpa pengguna menambah apa pun.
 
 ## BE-6 · Dokumen pengujian Modul 10
+
+> **Selesai:** format diambil dari Lab 10.2 Modul 10 (Black Box Testing: Halaman, Aksi Aktor,
+> Reaksi Sistem Benar/Salah, Hasil). Hasilnya [specs/pengujian.md](../specs/pengujian.md) dan
+> [pengujian-blackbox-suncost.docx](../pengujian-blackbox-suncost.docx), 29 kasus uji. Rencana awal di bawah
+> (tabel dari `SelfCheck.cs`) tidak dipakai karena modul meminta black box.
 
 Pemilik: **Farrel** · Berkas: `docs/specs/pengujian.md` *(baru)*
 
