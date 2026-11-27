@@ -26,6 +26,7 @@ bisa diperiksa ulang, bukan sekadar dipercaya.
 | **Kategori** | Climate Action, energi terbarukan |
 | **Data** | Open-Meteo Archive API (gratis, tanpa API key) dan SQLite lokal |
 | **Butuh internet?** | Hanya untuk mengambil radiasi lokasi baru. Data yang sama dipakai ulang 30 hari, dan riwayat selalu bisa dibuka offline. |
+| **Akun / login** | Tidak ada. Aplikasi dipakai satu pengguna di laptopnya sendiri, semua data tersimpan lokal. Untuk demo, cukup buka `.exe` lalu langsung buat simulasi. |
 | **Mata kuliah** | Junior Project, Teknik Basis Data dan Pemrograman Berbasis Objek |
 
 ---
@@ -36,6 +37,7 @@ bisa diperiksa ulang, bukan sekadar dipercaya.
 - [Fitur](#fitur)
 - [Tangkapan layar](#tangkapan-layar)
 - [Cara kerja](#cara-kerja)
+- [Penerapan OOP](#penerapan-oop)
 - [Menjalankan aplikasi](#menjalankan-aplikasi)
 - [Pengujian](#pengujian)
 - [Struktur repositori](#struktur-repositori)
@@ -178,13 +180,32 @@ ekuator, kemiringan sebesar lintang). Pendekatan ini sederhana dan cenderung kon
 | `Views/` | Halaman WPF. Tidak menghitung dan tidak menulis SQL sendiri. |
 
 Basis data memakai enam tabel ([ERD](docs/ERD.md)): `lokasi`, `panel_surya`,
-`tarif_listrik_pln`, `data_radiasi`, `radiasi_bulanan`, `skenario`.
+`tarif_listrik_pln`, `data_radiasi`, `radiasi_bulanan`, `skenario`. Interaksi pengguna dengan
+aplikasi digambarkan di [Use Case Diagram](docs/use-case.md).
 
 <details>
 <summary>Class diagram</summary>
 
 <img width="1492" alt="Class diagram SunCost" src="https://github.com/user-attachments/assets/fc16da93-a955-4a9a-9121-40422acccbf2" />
 </details>
+
+---
+
+## Penerapan OOP
+
+Empat pilar OOP paling jelas terlihat pada keluarga kelas panel surya di `Models/`.
+
+| Pilar | Penerapan | Di kode |
+|---|---|---|
+| **Encapsulation** | Field disembunyikan (`private`/`protected`) dan hanya dibaca lewat properti read-only, jadi data tidak bisa diubah dari luar kelas. | `PanelSurya`: `protected double kapasitasWp;` dan `public double KapasitasWp => kapasitasWp;`. `Lokasi`: `private double luasAtap;` |
+| **Inheritance** | Dua jenis panel mewarisi data dan rumus dari kelas dasar `PanelSurya`. | `class PanelMonokristal : PanelSurya`, `class PanelThinFilm : PanelSurya`, konstruktor memanggil `: base(...)` |
+| **Polymorphism** | Rumus koreksi suhu ditimpa oleh thin film. Kode pemanggil cukup memanggil `hitungKoreksiSuhu()`, dan hasilnya mengikuti jenis panel yang sebenarnya. | `PanelSurya.hitungKoreksiSuhu` (`virtual`), `PanelThinFilm.hitungKoreksiSuhu` (`override`, memanggil `base.hitungKoreksiSuhu` lalu menambah pemulihan annealing) |
+| **Abstraction** | `PanelSurya` abstrak, sehingga tidak bisa dibuat langsung, dan setiap subclass wajib menyebut jenisnya. Halaman WPF tidak tahu detail rumus, cukup memanggil satu method. | `public abstract class PanelSurya`, `public abstract string Jenis { get; }`, `SimulasiSkenario.jalankanSimulasi()` |
+
+Selain itu, `SimulasiSkenario` memakai komposisi: ia memegang objek `Lokasi`, `PanelSurya`,
+`DataRadiasi`, `TarifListrikPLN`, dan `AnalisisFinansial`, sesuai class diagram. Polimorfisme panel
+diperiksa otomatis di `Services/SelfCheck.cs`: dua jenis panel harus memberi koreksi suhu berbeda
+untuk input yang sama.
 
 ---
 
@@ -304,6 +325,7 @@ SunCost/
 | Dokumen | Isi |
 |---|---|
 | [docs/ERD.md](docs/ERD.md) | Diagram, kardinalitas, dan DDL SQLite enam tabel |
+| [docs/use-case.md](docs/use-case.md) | Use case diagram dan daftar use case |
 | [docs/panduan-penggunaan.md](docs/panduan-penggunaan.md) | Panduan singkat penggunaan, langkah demi langkah dengan screenshot ([.docx](docs/panduan-penggunaan-suncost.docx)) |
 | [docs/panduan-basis-data.md](docs/panduan-basis-data.md) | Lokasi berkas, migrasi otomatis, cara melihat dan mencadangkan data |
 | [docs/specs/pengujian.md](docs/specs/pengujian.md) | 28 kasus uji black box (format Modul 10) |

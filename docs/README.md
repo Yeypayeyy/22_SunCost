@@ -3,6 +3,7 @@
 | Dokumen | Isi |
 |---|---|
 | [ERD.md](ERD.md) | Rancangan basis data: diagram, kardinalitas, DDL SQLite |
+| [use-case.md](use-case.md) | Use case diagram (Mermaid) dan daftar use case |
 | [specs/layar-ui.md](specs/layar-ui.md) | Peta 12 frame Figma ke view WPF, token desain, aturan state |
 | [plans/implementasi-fe.md](plans/implementasi-fe.md) | Pembagian kerja frontend: jalur FE-A dan FE-B |
 | [plans/implementasi-be.md](plans/implementasi-be.md) | Pembagian kerja backend: BE-1 sampai BE-8 |
