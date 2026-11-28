@@ -154,7 +154,7 @@ Balik modal      = tahun saat penghematan kumulatif (turun 0,5%/tahun) ≥ biaya
 
 ### Asumsi
 
-Semua angka berikut ada di kode sebagai `public const` dan ditampilkan di halaman Tentang.
+Angka berikut dibaca dari kode dan ditampilkan di halaman Tentang.
 Alasannya dicatat di [ADR 0001](docs/decisions/0001-asumsi-perhitungan.md).
 
 | Asumsi | Nilai | Letak di kode |
@@ -166,6 +166,7 @@ Alasannya dicatat di [ADR 0001](docs/decisions/0001-asumsi-perhitungan.md).
 | Degradasi panel | 0,5% per tahun | `AnalisisFinansial.DegradasiBawaan` |
 | Umur sistem | 25 tahun | `AnalisisFinansial.UmurSistemTahun` |
 | Faktor emisi jaringan Jawa-Bali | 0,87 kg CO₂/kWh (KESDM) | `DampakLingkungan.FaktorEmisiBawaan` |
+| Periode data radiasi | 1 tahun terakhir (Open-Meteo Archive); hasilnya dipakai ulang 30 hari untuk koordinat yang sama | `LayananCuacaAPI.UmurCache` |
 | Tarif PLN | tetap selama 25 tahun, tanpa diskonto | |
 
 Radiasi pada bidang miring didekati dengan koreksi geometris terhadap posisi ideal (menghadap
